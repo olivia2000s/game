@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Elevate 🐾</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  /* Pixel art palette */
+  --gold:#F8C800;--gold-l:#FFE040;--gold-p:#2a2010;--gold-d:#C89800;
+  --navy:#1a1a2e;--navy-m:#16213e;
+  --cream:#0f0c1e;--cream2:#1a1730;
+  --white:#e8e0f0;--text:#e8e0f0;--muted:#8880a8;--border:rgba(248,200,0,0.25);
+  --green:#38d040;--green-l:#183818;--green-d:#20a020;
+  --red:#e83838;--red-l:#381018;
+  --blue:#3080f8;--blue-l:#101838;--purple:#a040e8;--purple-l:#200838;
+  /* NO border radius — pixel art is sharp corners */
+  --r:0px;--r-lg:0px;--r-xl:0px;
+  --sh:3px 3px 0 rgba(0,0,0,0.8);--sh-lg:4px 4px 0 rgba(0,0,0,0.9);
+  /* Pixel border style */
+  --px-border:2px solid rgba(248,200,0,0.4);
+  --px-border-bright:2px solid var(--gold);
+}
+html,body{height:100%;overflow:hidden;background:#0f0c1e;font-family:'Courier New',monospace;color:var(--text);user-select:none;image-rendering:pixelated}
+h1,h2,h3,h4{font-family:'Courier New',monospace;font-weight:900;line-height:1.1;letter-spacing:1px;text-transform:uppercase}
+button{font-family:'Courier New',monospace;cursor:pointer;border:none;background:none}
+
+#app{width:100%;max-width:430px;height:100vh;max-height:100vh;margin:0 auto;display:flex;flex-direction:column;background:var(--cream);overflow:hidden;position:relative}
+@media(min-width:500px){
+  body{background:#000;display:flex;align-items:center;justify-content:center}
+  #app{height:860px;border-radius:0;box-shadow:0 40px 120px rgba(26,24,69,0.35);overflow:hidden}
+}
+
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+.screen.active{display:flex}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 10px 10px;background:#0f0c1e}
+.scroll::-webkit-scrollbar{width:3px}
+.scroll::-webkit-scrollbar-thumb{background:var(--gold-d);border-radius:0}
+
+/* TOP BAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px 6px;flex-shrink:0;border-bottom:2px solid rgba(248,200,0,0.3);background:#1a1730}
+.logo{font-family:monospace;font-weight:900;font-size:24px;color:var(--navy)}
+.logo span{color:#fff}
+.pt{display:flex;align-items:center;gap:5px;border-radius:0;padding:6px 13px;font-family:monospace;font-weight:800;font-size:13px}
+.pt-navy{background:#111;color:var(--gold)}
+.pt-amber{background:#2a2010;color:var(--gold);border:2px solid var(--gold)}
+
+/* XP BAR */
+.xp-wrap{padding:4px 14px 6px;flex-shrink:0;background:#1a1730}
+.xp-row{display:flex;justify-content:space-between;font-size:7px;font-weight:600;color:var(--muted);margin-bottom:4px;font-family:monospace}
+.xp-row b{color:var(--navy);font-family:monospace;font-weight:900}
+.xp-track{height:6px;background:#f0f0f7;border-radius:0;overflow:hidden}
+.xp-fill{height:100%;border-radius:0;background:linear-gradient(90deg,var(--gold),var(--gold-d));transition:width .8s cubic-bezier(.17,.67,.35,1.1)}
+
+/* STREAK BANNER */
+.streak-banner{
+  margin:0 14px 10px;
+  background:var(--gold-p);border:1px solid rgba(245,168,0,0.3);
+  border-radius:0;padding:8px 14px;
+  font-weight:700;font-size:13px;color:var(--gold-d);
+  display:flex;align-items:center;gap:6px;flex-shrink:0;
+}
+
+/* ════════════════════════════
+   DOG SCENE
+════════════════════════════ */
+.scene-outer{margin:0 14px 10px;border-radius:0;overflow:hidden;flex-shrink:0;position:relative;box-shadow:var(--sh)}
+.dog-scene{
+  width:100%;height:210px;position:relative;overflow:hidden;
+  background:#5888c0;
+  image-rendering:pixelated;
+}
+/* Pixel sky gradient — 4 bands of blue */
+.px-sky{position:absolute;inset:0;bottom:50%}
+.px-sky-b1{position:absolute;top:0;left:0;right:0;height:25%;background:#6898d0}
+.px-sky-b2{position:absolute;top:25%;left:0;right:0;height:25%;background:#5888c0}
+.px-sky-b3{position:absolute;top:50%;left:0;right:0;height:25%;background:#4878b0}
+.px-sky-b4{position:absolute;top:75%;left:0;right:0;height:25%;background:#3868a0}
+
+/* Pixel sun — hard squares */
+.px-sun{position:absolute;top:12px;right:20px;width:24px;height:24px;background:#f8d800;image-rendering:pixelated}
+.px-sun::before{content:'';position:absolute;top:-4px;left:10px;width:4px;height:4px;background:#f8d800}
+.px-sun::after{content:'';position:absolute;bottom:-4px;left:10px;width:4px;height:4px;background:#f8d800}
+
+/* Pixel clouds — rectangular blocks */
+.px-cloud{position:absolute;image-rendering:pixelated;animation:pxCloud linear infinite}
+@keyframes pxCloud{from{transform:translateX(-120px)}to{transform:translateX(460px)}}
+.px-cloud .c-base{position:absolute;background:#e8f0ff}
+.pc1{top:18px;animation-duration:20s}
+.pc2{top:38px;animation-duration:28s;animation-delay:-14s}
+
+/* Pixel ground — tiled rows */
+.px-ground{position:absolute;bottom:0;left:0;right:0;height:105px}
+.px-ground-top{position:absolute;top:0;left:0;right:0;height:16px;background:#68b840}
+.px-ground-top::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:#88d848}
+.px-ground-mid{position:absolute;top:16px;left:0;right:0;height:16px;background:#50982e}
+.px-ground-mid::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:#60b838}
+.px-ground-bot{position:absolute;top:32px;left:0;right:0;bottom:0;background:#40782a}
+
+/* Pixel path — centered dirt strip with tile pattern */
+.px-path{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:64px;height:105px}
+.px-path-fill{position:absolute;inset:0;background:#a87840}
+.px-path-fill::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:#c89a58}
+/* path tile lines */
+.px-path-line{position:absolute;left:0;right:0;height:2px;background:#906030;opacity:.5}
+
+/* Pixel trees — block style */
+.px-tree{position:absolute;bottom:40px;image-rendering:pixelated}
+.px-tree-trunk{background:#7a5010;margin:0 auto}
+.px-tree-top{background:#2a7a1a}
+.px-tree-top::before{content:'';display:block;background:#388a22;height:4px}
+.px-tree-top::after{content:'';display:block;background:#1a6010;height:4px;margin-top:auto}
+.pt1{left:8px}.pt1 .px-tree-top{width:32px;height:36px}.pt1 .px-tree-trunk{width:8px;height:20px}
+.pt2{left:52px;bottom:38px}.pt2 .px-tree-top{width:24px;height:28px}.pt2 .px-tree-trunk{width:6px;height:14px}
+.pt3{right:10px}.pt3 .px-tree-top{width:30px;height:32px}.pt3 .px-tree-trunk{width:8px;height:18px}
+.pt4{right:52px;bottom:36px}.pt4 .px-tree-top{width:20px;height:24px}.pt4 .px-tree-trunk{width:6px;height:14px}
+
+/* Pixel grass tufts — small squares */
+.px-tuft{position:absolute;bottom:42px;image-rendering:pixelated}
+.px-tuft::before,.px-tuft::after{content:'';position:absolute;background:#88d040}
+.px-tuft::before{width:4px;height:8px;left:0;bottom:0}
+.px-tuft::after{width:4px;height:6px;left:6px;bottom:0}
+
+/* Scrolling ground tile — makes it feel like the dog is walking */
+.px-scroll-ground{
+  position:absolute;bottom:0;left:0;right:0;height:40px;
+  background:repeating-linear-gradient(90deg,#50982e 0px,#50982e 15px,#458828 15px,#458828 16px);
+  animation:groundScroll 2s linear infinite;
+}
+@keyframes groundScroll{from{background-position:0 0}to{background-position:-16px 0}}
+.px-scroll-ground-dark{
+  position:absolute;bottom:0;left:0;right:0;height:4px;
+  background:repeating-linear-gradient(90deg,#30601a 0px,#30601a 15px,#285018 15px,#285018 16px);
+  animation:groundScroll 2s linear infinite;
+}
+
+/* ── SVG WALKING DOG ── */
+.dog-wrap{
+  position:absolute;
+  bottom:44px;
+  cursor:pointer;
+  image-rendering:pixelated;
+  animation:dogPatrol 7s linear infinite;
+}
+/* Bounce lives on the svg-wrap so it doesn't conflict with patrol */
+#dogSvgWrap{
+  display:block;
+  animation:dogBounce1 1s steps(1) infinite;
+}
+@keyframes dogBounce1{
+  0%  {transform:translateY(0px)}
+  50% {transform:translateY(-4px)}
+}
+@keyframes dogPatrol{
+  0%  {left:5%;  transform:scaleX(1)}
+  44% {left:68%; transform:scaleX(1)}
+  50% {left:68%; transform:scaleX(-1)}
+  94% {left:5%;  transform:scaleX(-1)}
+  100%{left:5%;  transform:scaleX(1)}
+}
+.dog-leg-walk-a,.dog-leg-walk-b,.dog-leg-walk-c,.dog-leg-walk-d{animation:none}
+.dog-wrap.excited #dogSvgWrap{animation:dogBounce1 .3s steps(1) infinite}
+@keyframes dogBobFast{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+.dog-wrap.excited{animation:dogWalkFast 3s linear infinite}
+@keyframes dogWalkFast{
+  0%{left:5%;transform:scaleX(1)}47%{left:68%;transform:scaleX(1)}
+  50%{left:68%;transform:scaleX(-1)}97%{left:5%;transform:scaleX(-1)}100%{left:5%;transform:scaleX(1)}
+}
+.dog-wrap.sad{animation:dogWalkSlow 14s linear infinite}
+@keyframes dogWalkSlow{
+  0%{left:10%;transform:scaleX(1)}47%{left:60%;transform:scaleX(1)}
+  50%{left:60%;transform:scaleX(-1)}97%{left:10%;transform:scaleX(-1)}100%{left:10%;transform:scaleX(1)}
+}
+.dog-wrap.sad #dogSvgWrap{animation:dogBounce1 2s steps(1) infinite}
+@keyframes dogBobSad{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-1px) rotate(1deg)}}
+#dogSvgWrap.spinning{animation:dogSpin .3s linear infinite!important}
+@keyframes dogSpin{to{transform:rotate(360deg)}}
+/* SVG leg walk keyframes */
+.dog-leg-fl{animation:svgLegFL .35s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-leg-fr{animation:svgLegFR .35s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-leg-bl{animation:svgLegBL .35s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-leg-br{animation:svgLegBR .35s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-tail-g{animation:svgTailWag .3s ease-in-out infinite alternate;transform-origin:0% 50%}
+@keyframes svgLegFL{from{transform:rotate(-20deg)}to{transform:rotate(20deg)}}
+@keyframes svgLegFR{from{transform:rotate(20deg)}to{transform:rotate(-20deg)}}
+@keyframes svgLegBL{from{transform:rotate(18deg)}to{transform:rotate(-18deg)}}
+@keyframes svgLegBR{from{transform:rotate(-18deg)}to{transform:rotate(18deg)}}
+@keyframes svgTailWag{from{transform:rotate(-35deg)}to{transform:rotate(30deg)}}
+.dog-wrap.excited .dog-leg-fl{animation:svgLegFLf .16s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-wrap.excited .dog-leg-fr{animation:svgLegFRf .16s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-wrap.excited .dog-leg-bl{animation:svgLegBLf .16s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-wrap.excited .dog-leg-br{animation:svgLegBRf .16s ease-in-out infinite alternate;transform-origin:30% 20%}
+.dog-wrap.excited .dog-tail-g{animation:svgTailWagFast .15s ease-in-out infinite alternate;transform-origin:0% 50%}
+@keyframes svgLegFLf{from{transform:rotate(-28deg)}to{transform:rotate(28deg)}}
+@keyframes svgLegFRf{from{transform:rotate(28deg)}to{transform:rotate(-28deg)}}
+@keyframes svgLegBLf{from{transform:rotate(24deg)}to{transform:rotate(-24deg)}}
+@keyframes svgLegBRf{from{transform:rotate(-24deg)}to{transform:rotate(24deg)}}
+@keyframes svgTailWagFast{from{transform:rotate(-45deg)}to{transform:rotate(45deg)}}
+.dog-wrap.sad .dog-tail-g{animation:svgTailSad 2s ease-in-out infinite alternate;transform-origin:0% 50%}
+@keyframes svgTailSad{from{transform:rotate(-10deg)}to{transform:rotate(-5deg)}}
+
+/* NPC dogs */
+.npc{position:absolute;bottom:42px;animation:npcWalk linear infinite}
+.npc1{animation-duration:11s;animation-delay:-3s}
+.npc2{animation-duration:16s;animation-delay:-8s;bottom:40px}
+@keyframes npcWalk{0%{left:-10%}48%{left:110%}50%{left:110%;transform:scaleX(-1)}98%{left:-10%;transform:scaleX(-1)}100%{left:-10%}}
+/* Small NPC dog */
+.npc-dog{font-size:28px;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.2))}
+
+/* Speech bubble */
+.speech{
+  position:absolute;background:var(--white);border:1px solid var(--border);
+  border-radius:0;padding:7px 11px;
+  font-size:12px;font-weight:700;color:var(--navy);
+  white-space:nowrap;
+  bottom:100%;left:50%;transform:translateX(-50%);
+  margin-bottom:4px;
+  opacity:0;transition:opacity .3s;pointer-events:none;z-index:10;
+  box-shadow:var(--sh);font-family:monospace;
+}
+.speech::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:4px solid transparent;border-top-color:var(--gold)}
+.speech.show{opacity:1}
+
+/* Happiness pill in scene */
+.hpill{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,0.95);border-radius:0;padding:5px 14px;
+  font-size:13px;font-weight:800;color:var(--navy);
+  display:flex;align-items:center;gap:6px;
+  box-shadow:0 2px 12px rgba(0,0,0,0.12);
+  font-family:monospace;
+  white-space:nowrap;
+}
+
+/* ── INTERACTION BUTTONS (like screenshot) ── */
+.ibar{
+  display:flex;gap:8px;padding:0 14px 10px;flex-shrink:0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.ibar::-webkit-scrollbar{display:none}
+.ib{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  background:var(--white);border:1.5px solid var(--border);
+  border-radius:0;padding:11px 12px 9px;
+  min-width:66px;cursor:pointer;
+  transition:all .2s;flex-shrink:0;position:relative;
+}
+.ib:hover:not([disabled]){transform:translate(-1px,-1px);box-shadow:3px 3px 0 #000;border-color:var(--gold)}
+.ib:active:not([disabled]){transform:scale(.94)}
+.ib.active-ib{border-color:var(--gold);background:#2a2010;box-shadow:3px 3px 0 var(--gold)}
+.ib[disabled]{opacity:.35;cursor:not-allowed}
+.ibi{font-size:0;line-height:0;display:flex;align-items:center;justify-content:center}
+.ibl{font-size:11px;font-weight:700;color:var(--navy);font-family:monospace}
+.icd{font-size:6px;color:#e83838;font-weight:600;min-height:10px;font-family:monospace}
+
+/* BOTTOM NAV */
+.bnav{display:flex;height:60px;flex-shrink:0;background:#1a1730;border-top:3px solid var(--gold);z-index:10}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:10px;font-weight:700;cursor:pointer;border:none;background:none;padding:6px 0;transition:color .2s;position:relative;font-family:monospace}
+.nb .ni{font-size:0;line-height:0;transition:transform .2s;display:flex;align-items:center;justify-content:center}
+.nb.active{color:var(--gold)}
+.nb.active .ni{transform:scale(1.18)}
+.nb.active::after{content:'';position:absolute;bottom:4px;width:18px;height:3px;border-radius:0;background:var(--gold)}
+
+/* CARDS */
+.card{background:var(--white);border-radius:0;border:1px solid var(--border);padding:16px 18px;margin-bottom:12px}
+.card-title{font-family:monospace;font-weight:800;font-size:14px;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border-radius:0;font-weight:700;font-size:14px;padding:12px 24px;transition:all .18s;cursor:pointer;border:none}
+.btn-primary{background:#1a1a2e;color:var(--gold);border:2px solid var(--gold)}.btn-primary:hover{background:#252250}
+.btn-gold{background:var(--gold);color:#000;border:2px solid #fff}.btn-gold:hover{background:var(--gold-l)}
+.btn-ghost{background:transparent;color:var(--muted);border:2px solid rgba(248,200,0,0.3)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* CHIPS */
+.chip{display:inline-flex;align-items:center;gap:3px;border-radius:0;padding:3px 9px;font-size:11px;font-weight:700}
+.chip-green{background:#0a200a;color:var(--green);border:1px solid var(--green)}
+.chip-gold{background:#2a2010;color:var(--gold);border:1px solid var(--gold)}
+.chip-red{background:var(--red-l);color:#991b1b}
+.chip-blue{background:var(--blue-l);color:#1e40af}
+
+/* PROGRESS BARS */
+.pbar{height:8px;background:#f0f0f7;border-radius:0;overflow:hidden}
+.pfill{height:100%;border-radius:0;transition:width .7s cubic-bezier(.17,.67,.35,1.1)}
+.pa{background:linear-gradient(90deg,var(--gold),var(--gold-d))}
+.pg{background:linear-gradient(90deg,#4ade80,#16a34a)}
+.pb{background:linear-gradient(90deg,#60a5fa,#2563eb)}
+.pp{background:linear-gradient(90deg,#a78bfa,#7c3aed)}
+.pr{background:linear-gradient(90deg,#f87171,#dc2626)}
+
+/* GOALS */
+.goal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.goal-tile{background:var(--white);border-radius:0;border:1px solid var(--border);padding:13px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.goal-tile:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 rgba(248,200,0,.5)}
+.goal-tile:active{transform:scale(.97)}
+.goal-tile.done{border-color:var(--green);background:#0a200a}
+.goal-tile.done::before{content:'✓';position:absolute;top:6px;right:8px;font-size:12px;color:var(--green);font-family:monospace}
+.gt-icon{font-size:0;display:block;margin-bottom:4px;line-height:0}
+.gt-name{font-size:6px;font-weight:600;color:var(--muted);margin-bottom:3px;font-family:monospace;letter-spacing:.5px}
+.gt-val{font-family:monospace;font-weight:900;font-size:16px;color:var(--navy);line-height:1.1}
+.gt-val small{font-size:7px;font-weight:600;color:var(--muted)}
+.gt-bar{height:4px;background:#f0f0f7;border-radius:0;margin-top:7px;overflow:hidden}
+.gt-bar-fill{height:100%;border-radius:0;background:var(--gold);transition:width .5s}
+.goal-tile.done .gt-bar-fill{background:var(--green)}
+
+/* TRICKS */
+.trick-grid{display:flex;flex-wrap:wrap;gap:5px}
+.trick-chip{display:flex;align-items:center;gap:4px;background:var(--white);border:1px solid var(--border);border-radius:0;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted);font-family:monospace}
+.trick-chip.learned{border-color:var(--gold);background:#2a2010;color:var(--gold);box-shadow:2px 2px 0 #000}
+
+/* KENNEL CARDS */
+.kc{background:var(--white);border-radius:0;border:1.5px solid var(--border);padding:16px;display:flex;gap:12px;align-items:center;margin-bottom:10px;transition:all .2s}
+.kc.active-dog{border-color:var(--gold);background:#2a2010;box-shadow:3px 3px 0 var(--gold)}
+.kc.locked{opacity:.5;filter:grayscale(.3)}
+.ke{font-size:44px;flex-shrink:0;position:relative}
+.ki{flex:1;min-width:0}
+.kname{font-family:monospace;font-weight:900;font-size:17px;color:var(--navy)}
+.ksub{font-size:7px;color:var(--muted);margin-top:3px;font-family:'VT323',monospace}
+.kbtn{background:var(--navy);color:#fff;border:none;cursor:pointer;padding:9px 16px;border-radius:0;font-weight:700;font-size:12px;font-family:monospace;transition:all .2s;flex-shrink:0}
+.kbtn.on{background:var(--gold);color:#000}
+.kbtn.locked{background:#222;color:#555;cursor:not-allowed;border-color:#444}
+
+/* STATS */
+.shdr{background:var(--navy);border-radius:0;padding:20px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center}
+.sc .sn{font-family:monospace;font-weight:900;font-size:28px;color:var(--gold)}
+.sc .sl{font-size:6px;color:rgba(255,255,255,.55);font-weight:600;margin-top:4px;font-family:monospace}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin:8px 0}
+.cd{aspect-ratio:1;border-radius:0;background:#f0f0f7;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--muted)}
+.cd.done{background:var(--gold);color:#000;border-color:var(--gold)}
+.cd.today{background:#1a1a2e;color:var(--gold);border:2px solid var(--gold)}
+.hr{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(248,200,0,0.15)}
+.hr:last-child{border-bottom:none}
+.hl{display:flex;align-items:center;gap:8px}
+.hn{font-weight:600;font-size:8px;color:var(--white);font-family:monospace}
+.hd{font-size:8px;color:var(--muted);font-family:'VT323',monospace}
+.hxp{font-family:monospace;font-weight:900;font-size:14px;color:var(--gold)}
+
+/* HEALTH CONNECT CARD */
+.hc-card{
+  background:var(--navy);border-radius:0;
+  padding:18px 20px;margin-bottom:12px;
+  border:1px solid rgba(255,255,255,0.08);
+}
+.hc-title{font-family:monospace;font-weight:900;font-size:16px;color:var(--white);margin-bottom:4px}
+.hc-sub{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:14px;line-height:1.5}
+.hc-btns{display:flex;gap:8px;flex-wrap:wrap}
+.hc-btn{
+  display:flex;align-items:center;gap:7px;
+  border-radius:0;padding:10px 16px;
+  font-weight:700;font-size:13px;font-family:monospace;
+  cursor:pointer;border:none;transition:all .2s;
+  flex:1;justify-content:center;min-width:120px;
+}
+.hc-apple{background:#fff;color:#000}
+.hc-apple:hover{background:#f0f0f0;transform:translateY(-1px)}
+.hc-google{background:var(--gold);color:var(--navy)}
+.hc-google:hover{background:var(--gold-l);transform:translateY(-1px)}
+.hc-manual{background:rgba(255,255,255,0.1);color:var(--white);border:1px solid rgba(255,255,255,0.2)}
+.hc-manual:hover{background:rgba(255,255,255,0.15)}
+.hc-status{
+  margin-top:12px;display:flex;align-items:center;gap:6px;
+  font-size:12px;color:rgba(255,255,255,.5);font-family:monospace;font-weight:600;
+}
+.hc-dot{width:6px;height:6px;border-radius:0;background:var(--green);flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.3)}
+.hc-dot.pending{background:var(--gold)}
+
+/* MODAL */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .2s}
+.overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--cream);border-radius:0 var(--r-xl) 0 0;padding:20px 18px 32px;width:100%;transform:translateY(100%);transition:transform .4s cubic-bezier(.17,.67,.35,1.1);box-shadow:0 -8px 40px rgba(26,24,69,.15)}
+.overlay.show .modal{transform:translateY(0)}
+.mhandle{width:36px;height:3px;background:var(--border);border-radius:0;margin:0 auto 16px}
+.mtitle{font-family:monospace;font-weight:900;font-size:22px;color:var(--navy);text-align:center;margin-bottom:4px}
+.msub{font-size:8px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.8;font-family:'VT323',monospace}
+.sw{background:var(--white);border-radius:0;border:1px solid var(--border);padding:14px 16px;margin-bottom:16px}
+.sh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.sname{font-weight:700;font-size:8px;color:var(--white);font-family:monospace}
+.sval{font-family:monospace;font-weight:900;font-size:24px;color:var(--navy)}
+.sunit{font-size:8px;color:var(--muted);font-weight:600;font-family:'VT323',monospace}
+input[type=range]{width:100%;height:6px;border-radius:0;-webkit-appearance:none;appearance:none;background:linear-gradient(90deg,var(--gold) var(--pct,50%),#f0f0f7 var(--pct,50%));outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:0;background:var(--white);border:3px solid var(--gold);box-shadow:0 2px 8px rgba(245,168,0,.4);cursor:grab}
+.xpp{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:7px;font-weight:600;color:var(--muted);font-family:monospace}
+.xpb{background:var(--navy);color:var(--gold);font-family:monospace;font-weight:900;font-size:12px;padding:2px 10px;border-radius:0}
+.brow{display:flex;gap:8px}
+.brow .btn{flex:1;padding:12px;font-size:14px}
+
+/* Trick modal */
+#tmDog{width:120px;height:100px;display:block;margin:0 auto 8px;cursor:pointer;transition:transform .12s;image-rendering:pixelated}
+.tap-big:active{transform:scale(.82)!important}
+.tap-num{font-family:monospace;font-weight:900;font-size:52px;color:var(--gold);text-align:center;line-height:1}
+.tap-lbl{font-size:8px;color:var(--muted);text-align:center;margin-bottom:10px;font-family:monospace}
+
+/* Fetch */
+#fetchArena{background:linear-gradient(135deg,var(--gold-p),var(--cream2));border-radius:0;height:130px;position:relative;overflow:hidden;margin-bottom:14px;border:1.5px solid rgba(245,168,0,.3);cursor:crosshair}
+#fBall{position:absolute;font-size:34px;cursor:pointer;z-index:5;bottom:10px;left:50%}
+#fBall.catchable{animation:bFlash .2s ease-in-out infinite alternate;filter:drop-shadow(0 0 8px rgba(245,168,0,.8))}
+@keyframes bFlash{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-50%) scale(1.2)}}
+.fscore{display:flex;justify-content:space-between;font-family:monospace;font-size:18px;font-weight:900;margin-bottom:10px}
+.fc{color:var(--green)}.fm{color:var(--red)}
+
+/* Belly rub */
+#bellyDog{display:block;margin:0 auto 8px;cursor:ns-resize;width:120px;height:100px;image-rendering:pixelated}
+.rbar{height:12px;background:#f0f0f7;border-radius:0;overflow:hidden;border:1px solid var(--border);margin-bottom:8px}
+.rbar-fill{height:100%;border-radius:0;background:linear-gradient(90deg,var(--gold),var(--green));transition:width .1s}
+.rstatus{text-align:center;font-size:12px;color:var(--muted);font-weight:600}
+
+/* TOAST */
+.toast{position:absolute;top:12px;left:50%;transform:translateX(-50%) translateY(-70px);background:var(--navy);border-radius:0;padding:10px 20px;font-weight:700;font-size:13px;color:var(--gold);display:flex;align-items:center;gap:7px;z-index:500;white-space:nowrap;transition:transform .4s cubic-bezier(.17,.67,.35,1.1);box-shadow:var(--sh-lg);font-family:monospace}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* LEVEL UP */
+.lvlover{position:absolute;inset:0;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.92);opacity:0;pointer-events:none;transition:opacity .2s steps(3);text-align:center;padding:32px}
+.lvlover.show{opacity:1;pointer-events:all}
+.lvl-star{font-size:80px;animation:starPop .5s cubic-bezier(.17,.67,.35,1.5) both}
+@keyframes starPop{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+.lvl-title{font-family:monospace;font-weight:900;font-size:44px;color:var(--gold);margin-top:12px}
+.lvl-sub{font-size:9px;color:rgba(255,255,255,.8);margin-top:6px;font-family:monospace}
+.lvl-close{margin-top:26px;background:var(--gold);color:var(--navy);border:none;cursor:pointer;padding:13px 36px;border-radius:0;font-weight:900;font-size:16px;font-family:monospace}
+
+/* CONFETTI */
+.cf{position:absolute;pointer-events:none;z-index:400;animation:cfFall 1.6s ease-in forwards}
+@keyframes cfFall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(800px) rotate(720deg);opacity:0}}
+
+/* SLBL */
+.slbl{font-family:monospace;font-weight:900;font-size:14px;color:var(--navy);margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
+.slbl small{font-size:12px;color:var(--muted);font-family:'VT323',monospace;font-weight:500}
+.greeting{padding:4px 14px 6px;flex-shrink:0;background:#1a1730}
+.greeting h2{font-size:20px;color:var(--navy);font-family:monospace;font-weight:900}
+.greeting p{font-size:8px;color:var(--muted);font-family:'VT323',monospace}
+
+/* LOG CARDS */
+.lcat{margin-bottom:16px}
+.lcat-title{font-family:monospace;font-weight:900;font-size:14px;color:var(--navy);margin-bottom:9px;display:flex;align-items:center;gap:6px}
+.lc{background:var(--white);border-radius:0;border:1px solid var(--border);padding:14px 16px;margin-bottom:8px}
+.lct{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.lcl{display:flex;align-items:center;gap:9px}
+.lcr{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.lc-name{font-weight:700;font-size:8px;color:var(--white);font-family:monospace}
+.lc-goal{font-size:7px;color:var(--muted);font-family:'VT323',monospace}
+.lc-val{font-family:monospace;font-weight:900;font-size:18px;color:var(--navy)}
+.log-btn{width:100%;padding:10px;border-radius:0;background:rgba(26,24,69,.06);border:1px solid rgba(26,24,69,.12);color:var(--navy);font-family:monospace;font-weight:700;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.log-btn:hover{background:#252250;box-shadow:3px 3px 0 var(--gold)}
+.log-btn:active{transform:scale(.97)}
+
+/* ══ COLLECTIBLE DOG CARDS (like inspo image 1) ══ */
+.coll-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.dog-coll-card{
+  border-radius:0;padding:3px;
+  position:relative;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+}
+.dog-coll-card:hover{transform:translateY(-4px) scale(1.03)}
+.dog-coll-card.locked-card{filter:grayscale(1);opacity:.5}
+.dog-coll-card.unlocked-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.dog-coll-card .card-badge{
+  position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+  background:var(--white);border-radius:0;padding:2px 8px;
+  font-size:10px;font-weight:700;color:var(--navy);
+  box-shadow:0 2px 6px rgba(0,0,0,.15);white-space:nowrap;
+  font-family:monospace;
+}
+.dog-coll-card .card-inner{
+  background:var(--white);border-radius:0;
+  padding:10px 8px 8px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;
+  min-height:120px;justify-content:space-between;
+}
+.dog-coll-card .card-dog-art{width:72px;height:64px;margin:0 auto 4px;display:flex;align-items:flex-end;justify-content:center;overflow:visible}
+.dog-coll-card .card-name{font-family:monospace;font-weight:900;font-size:12px;color:var(--navy);margin-bottom:3px}
+.dog-coll-card .card-breed{font-size:9px;color:var(--muted);font-weight:600;margin-bottom:4px}
+.dog-coll-card .card-stars{display:flex;gap:2px;justify-content:center}
+.card-star{font-size:10px}
+.card-star.filled{color:var(--gold)}
+.card-star.empty{color:#e0e0e0}
+.dog-coll-card .lock-overlay{
+  position:absolute;inset:3px;border-radius:0;
+  background:rgba(255,255,255,0.7);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:22px;gap:2px;
+}
+.lock-overlay .lock-days{font-size:10px;font-weight:700;color:var(--navy);font-family:monospace}
+/* Card gradient borders per rarity */
+.rarity-common{background:linear-gradient(135deg,#b0d4f1,#7eb8da)}
+.rarity-rare{background:linear-gradient(135deg,#b8a9f5,#8b6cf7)}
+.rarity-epic{background:linear-gradient(135deg,#f5a9c8,#e74c8b)}
+.rarity-legendary{background:linear-gradient(135deg,#FFD700,#FF8C00)}
+.active-card-glow{box-shadow:0 0 0 3px var(--gold),0 8px 24px rgba(245,168,0,.4)!important;transform:translateY(-4px) scale(1.04)!important}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TOAST -->
+<div class="toast" id="toast"><span id="ti">⭐</span><span id="tm">XP!</span></div>
+
+<!-- LEVEL UP -->
+<div class="lvlover" id="lvlOver">
+  <div class="lvl-star">⭐</div>
+  <div class="lvl-title" id="lvlTitle">Level Up!</div>
+  <div class="lvl-sub" id="lvlSub">You reached Level 2!</div>
+  <button class="lvl-close" onclick="closeLvl()">Awesome! 🐾</button>
+</div>
+
+<!-- LOG MODAL -->
+<div class="overlay" id="logModal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="mTitle">Log Steps</div>
+    <div class="msub" id="mSub">Track your daily movement</div>
+    <div class="sw">
+      <div class="sh"><div class="sname" id="mMetric">Steps</div><div><span class="sval" id="mVal">5000</span> <span class="sunit" id="mUnit">steps</span></div></div>
+      <input type="range" id="mSlider" min="0" max="20000" value="5000" step="500">
+      <div class="xpp">Goal reward: <span class="xpb" id="mXpB">+50 XP</span></div>
+    </div>
+    <div class="brow">
+      <button class="btn btn-ghost" onclick="closeLogModal()">Cancel</button>
+      <button class="btn btn-gold" onclick="submitLog()">Log It ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- TRICK MODAL -->
+<div class="overlay" id="trickModal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle" id="tmTitle">Teaching...</div>
+    <div class="msub" id="tmSub">Tap your dog to teach this trick!</div>
+    <div id="tmDog" style="width:120px;height:100px;margin:0 auto 8px;image-rendering:pixelated;cursor:pointer"></div>
+    <div class="tap-num" id="tmCount">0</div>
+    <div class="tap-lbl">/ <span id="tmReq">10</span> taps to learn</div>
+    <div style="background:#f0f0f7;border-radius:0;height:10px;overflow:hidden;margin-bottom:16px">
+      <div style="height:100%;border-radius:0;background:var(--gold);transition:width .2s" id="tmBar"></div>
+    </div>
+    <button class="btn btn-ghost" style="width:100%" onclick="closeTrickModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- FETCH MODAL -->
+<div class="overlay" id="fetchModal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">🎾 Play Fetch!</div>
+    <div class="msub">Tap the ball before it lands! Miss 3× and game over.</div>
+    <div id="fetchArena"><div id="fBall">🎾</div></div>
+    <div class="fscore"><div class="fc">Caught: <span id="fCaught">0</span></div><div class="fm">Missed: <span id="fMissed">0</span>/3</div></div>
+    <button class="btn btn-ghost" style="width:100%" onclick="endFetch()">Stop Playing</button>
+  </div>
+</div>
+
+<!-- BELLY RUB MODAL -->
+<div class="overlay" id="bellyModal">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">🐾 Belly Rub!</div>
+    <div class="msub">Stroke up and down on your dog for 5 seconds!</div>
+    <div id="bellyDog" style="width:120px;height:100px;margin:0 auto;cursor:ns-resize;image-rendering:pixelated"></div>
+    <div class="rbar"><div class="rbar-fill" id="rubyBar" style="width:0%"></div></div>
+    <div class="rstatus" id="rubyStatus">Rub up and down!</div>
+    <div style="margin-top:14px">
+      <button class="btn btn-ghost" style="width:100%" onclick="closeBelly()">Stop</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ HOME ════════════ -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <div class="logo">Ele<span>vate</span></div>
+    <div style="display:flex;gap:7px">
+      <div class="pt pt-amber">🔥 <span id="strVal">0</span></div>
+      <div class="pt pt-navy">⭐ <span id="xpVal">0</span></div>
+    </div>
+  </div>
+  <div class="xp-wrap">
+    <div class="xp-row"><span>Level <b id="lvlNum">1</b></span><span><b id="xpCur">0</b> / <b id="xpNext">100</b> XP</span></div>
+    <div class="xp-track"><div class="xp-fill" id="xpFill" style="width:0%"></div></div>
+  </div>
+  <div class="streak-banner" id="streakBanner">
+    🔥 Start your streak — log something today!
+  </div>
+  <div class="greeting">
+    <h2 id="greetTxt">Good morning! 🌅</h2>
+    <p id="greetSub">Your dog is waiting for you!</p>
+  </div>
+
+  <!-- PIXEL ART SCENE -->
+  <div class="scene-outer">
+    <div class="dog-scene" id="dogScene">
+      <div class="px-sky">
+        <div class="px-sky-b1"></div><div class="px-sky-b2"></div>
+        <div class="px-sky-b3"></div><div class="px-sky-b4"></div>
+      </div>
+      <div class="px-sun"></div>
+      <div class="px-cloud pc1" style="left:-120px">
+        <div class="c-base" style="width:16px;height:8px;top:8px;left:0"></div>
+        <div class="c-base" style="width:40px;height:12px;top:4px;left:8px"></div>
+        <div class="c-base" style="width:56px;height:8px;top:12px;left:0"></div>
+        <div class="c-base" style="width:16px;height:8px;top:4px;left:40px"></div>
+      </div>
+      <div class="px-cloud pc2" style="left:-80px">
+        <div class="c-base" style="width:12px;height:8px;top:8px;left:0"></div>
+        <div class="c-base" style="width:32px;height:12px;top:4px;left:4px"></div>
+        <div class="c-base" style="width:40px;height:8px;top:12px;left:0"></div>
+      </div>
+      <div class="px-ground">
+        <div class="px-ground-top"></div>
+        <div class="px-ground-mid"></div>
+        <div class="px-ground-bot"></div>
+      </div>
+      <div class="px-scroll-ground"></div>
+      <div class="px-scroll-ground-dark"></div>
+      <div class="px-path">
+        <div class="px-path-fill"></div>
+        <div class="px-path-line" style="top:20px"></div>
+        <div class="px-path-line" style="top:50px"></div>
+        <div class="px-path-line" style="top:80px"></div>
+      </div>
+      <div class="px-tree pt1"><div class="px-tree-top"></div><div class="px-tree-trunk"></div></div>
+      <div class="px-tree pt2"><div class="px-tree-top"></div><div class="px-tree-trunk"></div></div>
+      <div class="px-tree pt3"><div class="px-tree-top"></div><div class="px-tree-trunk"></div></div>
+      <div class="px-tree pt4"><div class="px-tree-top"></div><div class="px-tree-trunk"></div></div>
+      <div class="px-tuft" style="left:16%"></div>
+      <div class="px-tuft" style="left:40%"></div>
+      <div class="px-tuft" style="left:65%"></div>
+      <div class="px-tuft" style="left:82%"></div>
+      <div class="dog-wrap" id="dogWrap" onclick="petDog(event)">
+        <div class="speech" id="dogSpeech">Woof!</div>
+        <div class="dog-svg-wrap" id="dogSvgWrap">
+          <svg id="dogSVG" viewBox="0 0 54 48" width="72" height="64"
+            style="overflow:visible;image-rendering:pixelated;image-rendering:crisp-edges"></svg>
+        </div>
+      </div>
+      <div class="hpill">
+        <span id="happEmoji">😊</span><span id="happLabel">Happy</span>
+        <span style="color:var(--muted);font-size:11px">(<span id="happVal">50</span>%)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ibar">
+    <div class="ib" id="ibt-pet" onclick="petDog(null)">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;image-rendering:crisp-edges;display:block"><rect x="5.25" y="0.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="0.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="1.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="1.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="3.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="3.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="7.0" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="10.5" y="0.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="0.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="10.5" y="1.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="1.75" width="1.75" height="1.75" fill="#FFF0A0"/><rect x="10.5" y="3.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="3.5" width="1.75" height="1.75" fill="#FFF0A0"/><rect x="10.5" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="10.5" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="10.5" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="12.25" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="15.75" y="0.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="0.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="15.75" y="1.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="1.75" width="1.75" height="1.75" fill="#FFF0A0"/><rect x="15.75" y="3.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="3.5" width="1.75" height="1.75" fill="#FFF0A0"/><rect x="15.75" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="15.75" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="15.75" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="17.5" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="21.0" y="1.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="1.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="3.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="3.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="5.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="7.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="22.75" y="8.75" width="1.75" height="1.75" fill="#C89040"/><rect x="3.5" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="8.75" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="10.5" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="14.0" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="15.75" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="19.25" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="24.5" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="3.5" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="8.75" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="10.5" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="14.0" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="15.75" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="19.25" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="24.5" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="3.5" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="5.25" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="7.0" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="8.75" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="10.5" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="12.25" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="14.0" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="15.75" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="17.5" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="19.25" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="21.0" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="22.75" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="24.5" y="14.0" width="1.75" height="1.75" fill="#F5C060"/><rect x="3.5" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="5.25" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="7.0" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="8.75" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="10.5" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="12.25" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="14.0" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="17.5" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="19.25" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="21.0" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="22.75" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="24.5" y="15.75" width="1.75" height="1.75" fill="#E8A840"/><rect x="3.5" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="5.25" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="7.0" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="8.75" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="10.5" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="12.25" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="14.0" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="15.75" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="17.5" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="19.25" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="21.0" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="22.75" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="24.5" y="17.5" width="1.75" height="1.75" fill="#E8A840"/><rect x="3.5" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="5.25" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="7.0" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="8.75" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="10.5" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="12.25" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="14.0" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="15.75" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="17.5" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="19.25" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="21.0" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="22.75" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="24.5" y="19.25" width="1.75" height="1.75" fill="#C89040"/><rect x="0.0" y="8.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="1.75" y="8.75" width="1.75" height="1.75" fill="#F5C060"/><rect x="0.0" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="1.75" y="10.5" width="1.75" height="1.75" fill="#F5C060"/><rect x="0.0" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="1.75" y="12.25" width="1.75" height="1.75" fill="#F5C060"/><rect x="0.0" y="14.0" width="1.75" height="1.75" fill="#C89040"/><rect x="1.75" y="14.0" width="1.75" height="1.75" fill="#C89040"/></svg></span><span class="ibl">Pet</span><span class="icd" id="cd-pet"></span>
+    </div>
+    <div class="ib" id="ibt-belly" onclick="startBelly()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;image-rendering:crisp-edges;display:block"><rect x="1.75" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="3.5" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="5.25" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="1.75" y="3.5" width="1.75" height="1.75" fill="#FFBB50"/><rect x="3.5" y="3.5" width="1.75" height="1.75" fill="#FFBB50"/><rect x="5.25" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="1.75" y="5.25" width="1.75" height="1.75" fill="#E89830"/><rect x="3.5" y="5.25" width="1.75" height="1.75" fill="#E89830"/><rect x="5.25" y="5.25" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="0.0" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="0.0" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="0.0" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="1.75" width="1.75" height="1.75" fill="#FFBB50"/><rect x="10.5" y="1.75" width="1.75" height="1.75" fill="#FFBB50"/><rect x="12.25" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="0.0" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="0.0" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="0.0" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="1.75" width="1.75" height="1.75" fill="#FFBB50"/><rect x="17.5" y="1.75" width="1.75" height="1.75" fill="#FFBB50"/><rect x="19.25" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="24.5" y="1.75" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="3.5" width="1.75" height="1.75" fill="#FFBB50"/><rect x="24.5" y="3.5" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="5.25" width="1.75" height="1.75" fill="#E89830"/><rect x="24.5" y="5.25" width="1.75" height="1.75" fill="#E89830"/><rect x="5.25" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="7.0" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="8.75" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="10.5" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="12.25" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="14.0" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="15.75" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="17.5" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="19.25" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="21.0" y="8.75" width="1.75" height="1.75" fill="#C87820"/><rect x="3.5" y="10.5" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="7.0" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="14.0" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="21.0" y="10.5" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="10.5" width="1.75" height="1.75" fill="#C87820"/><rect x="3.5" y="12.25" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="7.0" y="12.25" width="1.75" height="1.75" fill="#FFBB50"/><rect x="8.75" y="12.25" width="1.75" height="1.75" fill="#FFBB50"/><rect x="10.5" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="14.0" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="21.0" y="12.25" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="12.25" width="1.75" height="1.75" fill="#C87820"/><rect x="3.5" y="14.0" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="7.0" y="14.0" width="1.75" height="1.75" fill="#FFBB50"/><rect x="8.75" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="14.0" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="21.0" y="14.0" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="14.0" width="1.75" height="1.75" fill="#C87820"/><rect x="3.5" y="15.75" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="7.0" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="14.0" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="21.0" y="15.75" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="15.75" width="1.75" height="1.75" fill="#C87820"/><rect x="3.5" y="17.5" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="7.0" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="14.0" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="21.0" y="17.5" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="17.5" width="1.75" height="1.75" fill="#C87820"/><rect x="3.5" y="19.25" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="7.0" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="8.75" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="10.5" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="12.25" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="14.0" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="15.75" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="17.5" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="19.25" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="21.0" y="19.25" width="1.75" height="1.75" fill="#E89830"/><rect x="22.75" y="19.25" width="1.75" height="1.75" fill="#C87820"/><rect x="5.25" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="7.0" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="8.75" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="10.5" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="12.25" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="14.0" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="15.75" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="17.5" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="19.25" y="21.0" width="1.75" height="1.75" fill="#C87820"/><rect x="21.0" y="21.0" width="1.75" height="1.75" fill="#C87820"/></svg></span><span class="ibl">Belly</span><span class="icd" id="cd-belly"></span>
+    </div>
+    <div class="ib" id="ibt-fetch" onclick="startFetch()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;display:block"><rect x="7.0" y="0.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="10.5" y="0.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="14.0" y="0.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="17.5" y="0.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="3.5" y="3.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="7.0" y="3.5" width="3.5" height="3.5" fill="#aae020"/><rect x="10.5" y="3.5" width="3.5" height="3.5" fill="#ccff40"/><rect x="14.0" y="3.5" width="3.5" height="3.5" fill="#aae020"/><rect x="17.5" y="3.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="21.0" y="3.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="0.0" y="7.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="3.5" y="7.0" width="3.5" height="3.5" fill="#aae020"/><rect x="7.0" y="7.0" width="3.5" height="3.5" fill="#ccff40"/><rect x="10.5" y="7.0" width="3.5" height="3.5" fill="#fff"/><rect x="14.0" y="7.0" width="3.5" height="3.5" fill="#ccff40"/><rect x="17.5" y="7.0" width="3.5" height="3.5" fill="#aae020"/><rect x="21.0" y="7.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="24.5" y="7.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="0.0" y="10.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="3.5" y="10.5" width="3.5" height="3.5" fill="#ccff40"/><rect x="7.0" y="10.5" width="3.5" height="3.5" fill="#fff"/><rect x="10.5" y="10.5" width="3.5" height="3.5" fill="#aae020"/><rect x="14.0" y="10.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="17.5" y="10.5" width="3.5" height="3.5" fill="#aae020"/><rect x="21.0" y="10.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="24.5" y="10.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="0.0" y="14.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="3.5" y="14.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="7.0" y="14.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="10.5" y="14.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="14.0" y="14.0" width="3.5" height="3.5" fill="#aae020"/><rect x="17.5" y="14.0" width="3.5" height="3.5" fill="#ccff40"/><rect x="21.0" y="14.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="24.5" y="14.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="0.0" y="17.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="3.5" y="17.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="7.0" y="17.5" width="3.5" height="3.5" fill="#aae020"/><rect x="10.5" y="17.5" width="3.5" height="3.5" fill="#ccff40"/><rect x="14.0" y="17.5" width="3.5" height="3.5" fill="#fff"/><rect x="17.5" y="17.5" width="3.5" height="3.5" fill="#ccff40"/><rect x="21.0" y="17.5" width="3.5" height="3.5" fill="#aae020"/><rect x="24.5" y="17.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="3.5" y="21.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="7.0" y="21.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="10.5" y="21.0" width="3.5" height="3.5" fill="#aae020"/><rect x="14.0" y="21.0" width="3.5" height="3.5" fill="#ccff40"/><rect x="17.5" y="21.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="21.0" y="21.0" width="3.5" height="3.5" fill="#88cc00"/><rect x="7.0" y="24.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="10.5" y="24.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="14.0" y="24.5" width="3.5" height="3.5" fill="#88cc00"/><rect x="17.5" y="24.5" width="3.5" height="3.5" fill="#88cc00"/></svg></span><span class="ibl">Fetch</span><span class="icd" id="cd-fetch"></span>
+    </div>
+    <div class="ib" id="ibt-treat" onclick="giveTreat()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;image-rendering:crisp-edges;display:block"><rect x="12.25" y="0.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="14.00" y="0.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="12.25" y="1.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="14.00" y="1.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="12.25" y="3.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="14.00" y="3.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="12.25" y="22.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="14.00" y="22.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="12.25" y="24.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="14.00" y="24.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="12.25" y="26.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="14.00" y="26.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="0.00" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="3.50" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="0.00" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="3.50" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="22.75" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="24.50" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="26.25" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="22.75" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="24.50" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="26.25" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="5.25" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="5.25" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="5.25" y="19.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="19.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="5.25" y="21.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="21.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="19.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="19.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="21.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="21.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="8.75" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="8.75" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="10.50" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="17.50" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="17.50" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="15.75" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="8.75" y="17.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="8.75" y="19.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="10.50" y="17.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="17.50" y="17.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="17.50" y="19.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="15.75" y="17.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="10.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="7.00" y="15.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="10.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="12.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="14.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="15.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="8.75" y="10.50" width="1.75" height="1.75" fill="#FFE840"/><rect x="10.50" y="10.50" width="1.75" height="1.75" fill="#FFE840"/><rect x="12.25" y="10.50" width="1.75" height="1.75" fill="#FFE840"/><rect x="14.00" y="10.50" width="1.75" height="1.75" fill="#FFE840"/><rect x="15.75" y="10.50" width="1.75" height="1.75" fill="#FFE840"/><rect x="17.50" y="10.50" width="1.75" height="1.75" fill="#FFE840"/><rect x="8.75" y="12.25" width="1.75" height="1.75" fill="#FFE840"/><rect x="10.50" y="12.25" width="1.75" height="1.75" fill="#FFE840"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#FFE840"/><rect x="14.00" y="12.25" width="1.75" height="1.75" fill="#FFE840"/><rect x="15.75" y="12.25" width="1.75" height="1.75" fill="#FFE840"/><rect x="17.50" y="12.25" width="1.75" height="1.75" fill="#FFE840"/><rect x="8.75" y="14.00" width="1.75" height="1.75" fill="#FFE840"/><rect x="10.50" y="14.00" width="1.75" height="1.75" fill="#FFE840"/><rect x="12.25" y="14.00" width="1.75" height="1.75" fill="#fff"/><rect x="14.00" y="14.00" width="1.75" height="1.75" fill="#fff"/><rect x="15.75" y="14.00" width="1.75" height="1.75" fill="#FFE840"/><rect x="17.50" y="14.00" width="1.75" height="1.75" fill="#FFE840"/><rect x="8.75" y="15.75" width="1.75" height="1.75" fill="#FFE840"/><rect x="10.50" y="15.75" width="1.75" height="1.75" fill="#FFE840"/><rect x="12.25" y="15.75" width="1.75" height="1.75" fill="#FFE840"/><rect x="14.00" y="15.75" width="1.75" height="1.75" fill="#FFE840"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#FFE840"/><rect x="17.50" y="15.75" width="1.75" height="1.75" fill="#FFE840"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#fff"/><rect x="14.00" y="12.25" width="1.75" height="1.75" fill="#fff"/></svg></span><span class="ibl">Treat</span><span class="icd" id="cd-treat"></span>
+    </div>
+    <div class="ib" id="ibt-walk" onclick="goWalk()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;image-rendering:crisp-edges;display:block"><rect x="0.00" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="1.75" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="0.00" y="15.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="1.75" y="15.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="0.00" y="17.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="3.50" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="5.25" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="7.00" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="3.50" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="5.25" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="7.00" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="8.75" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="10.50" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="8.75" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="10.50" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="8.75" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="10.50" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="12.25" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="12.25" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="14.00" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="15.75" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="17.50" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="19.25" y="10.50" width="1.75" height="1.75" fill="#D4902A"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="14.00" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="15.75" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="17.50" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="19.25" y="12.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="12.25" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="14.00" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="15.75" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="17.50" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="12.25" y="15.75" width="1.75" height="1.75" fill="#F0C060"/><rect x="14.00" y="15.75" width="1.75" height="1.75" fill="#F0C060"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#F0C060"/><rect x="10.50" y="15.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="19.25" y="15.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="21.00" y="15.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="19.25" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="21.00" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="22.75" y="14.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="21.00" y="5.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="22.75" y="5.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="24.50" y="5.25" width="1.75" height="1.75" fill="#D4902A"/><rect x="19.25" y="7.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="21.00" y="7.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="22.75" y="7.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="24.50" y="7.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="26.25" y="7.00" width="1.75" height="1.75" fill="#D4902A"/><rect x="19.25" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="21.00" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="22.75" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="24.50" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="26.25" y="8.75" width="1.75" height="1.75" fill="#D4902A"/><rect x="21.00" y="10.50" width="1.75" height="1.75" fill="#A06010"/><rect x="22.75" y="10.50" width="1.75" height="1.75" fill="#A06010"/><rect x="24.50" y="7.00" width="1.75" height="1.75" fill="#111"/><rect x="24.50" y="8.75" width="1.75" height="1.75" fill="#111"/><rect x="5.25" y="15.75" width="1.75" height="1.75" fill="#A06010"/><rect x="5.25" y="17.50" width="1.75" height="1.75" fill="#A06010"/><rect x="5.25" y="19.25" width="1.75" height="1.75" fill="#A06010"/><rect x="3.50" y="19.25" width="1.75" height="1.75" fill="#A06010"/><rect x="10.50" y="17.50" width="1.75" height="1.75" fill="#A06010"/><rect x="10.50" y="19.25" width="1.75" height="1.75" fill="#A06010"/><rect x="10.50" y="21.00" width="1.75" height="1.75" fill="#A06010"/><rect x="12.25" y="21.00" width="1.75" height="1.75" fill="#A06010"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#A06010"/><rect x="15.75" y="17.50" width="1.75" height="1.75" fill="#A06010"/><rect x="15.75" y="19.25" width="1.75" height="1.75" fill="#A06010"/><rect x="14.00" y="19.25" width="1.75" height="1.75" fill="#A06010"/><rect x="21.00" y="17.50" width="1.75" height="1.75" fill="#A06010"/><rect x="21.00" y="19.25" width="1.75" height="1.75" fill="#A06010"/><rect x="21.00" y="21.00" width="1.75" height="1.75" fill="#A06010"/><rect x="22.75" y="21.00" width="1.75" height="1.75" fill="#A06010"/><rect x="0.00" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="3.50" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="0.00" y="10.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="10.50" width="1.75" height="1.75" fill="#F8C800"/></svg></span><span class="ibl">Walk</span><span class="icd" id="cd-walk"></span>
+    </div>
+    <div class="ib active-ib" id="ibt-trick" onclick="openTrick()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;image-rendering:crisp-edges;display:block"><rect x="1.75" y="22.75" width="1.75" height="1.75" fill="#555"/><rect x="3.50" y="22.75" width="1.75" height="1.75" fill="#555"/><rect x="3.50" y="24.50" width="1.75" height="1.75" fill="#555"/><rect x="5.25" y="24.50" width="1.75" height="1.75" fill="#555"/><rect x="1.75" y="24.50" width="1.75" height="1.75" fill="#777"/><rect x="1.75" y="21.00" width="1.75" height="1.75" fill="#555"/><rect x="5.25" y="19.25" width="1.75" height="1.75" fill="#555"/><rect x="7.00" y="19.25" width="1.75" height="1.75" fill="#555"/><rect x="5.25" y="21.00" width="1.75" height="1.75" fill="#555"/><rect x="7.00" y="17.50" width="1.75" height="1.75" fill="#555"/><rect x="8.75" y="17.50" width="1.75" height="1.75" fill="#555"/><rect x="8.75" y="15.75" width="1.75" height="1.75" fill="#555"/><rect x="10.50" y="15.75" width="1.75" height="1.75" fill="#555"/><rect x="10.50" y="14.00" width="1.75" height="1.75" fill="#555"/><rect x="12.25" y="14.00" width="1.75" height="1.75" fill="#555"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#555"/><rect x="14.00" y="12.25" width="1.75" height="1.75" fill="#555"/><rect x="14.00" y="10.50" width="1.75" height="1.75" fill="#555"/><rect x="15.75" y="10.50" width="1.75" height="1.75" fill="#555"/><rect x="15.75" y="8.75" width="1.75" height="1.75" fill="#555"/><rect x="17.50" y="8.75" width="1.75" height="1.75" fill="#555"/><rect x="17.50" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="17.50" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="15.75" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="15.75" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="7.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="17.50" y="3.50" width="1.75" height="1.75" fill="#FFE040"/><rect x="19.25" y="3.50" width="1.75" height="1.75" fill="#FFE040"/><rect x="17.50" y="8.75" width="1.75" height="1.75" fill="#FFE040"/><rect x="19.25" y="8.75" width="1.75" height="1.75" fill="#FFE040"/><rect x="14.00" y="5.25" width="1.75" height="1.75" fill="#FFE040"/><rect x="14.00" y="7.00" width="1.75" height="1.75" fill="#FFE040"/><rect x="22.75" y="5.25" width="1.75" height="1.75" fill="#FFE040"/><rect x="22.75" y="7.00" width="1.75" height="1.75" fill="#FFE040"/><rect x="17.50" y="5.25" width="1.75" height="1.75" fill="#fff"/><rect x="19.25" y="5.25" width="1.75" height="1.75" fill="#fff"/><rect x="17.50" y="7.00" width="1.75" height="1.75" fill="#fff"/><rect x="19.25" y="7.00" width="1.75" height="1.75" fill="#fff"/><rect x="3.50" y="3.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="5.25" y="3.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="3.50" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="1.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="5.25" width="1.75" height="1.75" fill="#F8C800"/><rect x="8.75" y="0.00" width="1.75" height="1.75" fill="#fff"/><rect x="10.50" y="0.00" width="1.75" height="1.75" fill="#fff"/><rect x="8.75" y="1.75" width="1.75" height="1.75" fill="#fff"/><rect x="7.00" y="0.00" width="1.75" height="1.75" fill="#fff"/><rect x="7.00" y="1.75" width="1.75" height="1.75" fill="#fff"/><rect x="22.75" y="1.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="24.50" y="1.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="22.75" y="3.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="0.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="24.50" y="0.00" width="1.75" height="1.75" fill="#F8C800"/><rect x="5.25" y="10.50" width="1.75" height="1.75" fill="#e83838"/><rect x="7.00" y="10.50" width="1.75" height="1.75" fill="#e83838"/><rect x="5.25" y="12.25" width="1.75" height="1.75" fill="#e83838"/><rect x="3.50" y="10.50" width="1.75" height="1.75" fill="#e83838"/><rect x="26.25" y="12.25" width="1.75" height="1.75" fill="#3080f8"/><rect x="26.25" y="14.00" width="1.75" height="1.75" fill="#3080f8"/><rect x="24.50" y="14.00" width="1.75" height="1.75" fill="#3080f8"/><rect x="0.00" y="15.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="1.75" y="15.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="0.00" y="17.50" width="1.75" height="1.75" fill="#F8C800"/><rect x="0.00" y="24.50" width="1.75" height="1.75" fill="#fff"/><rect x="1.75" y="26.25" width="1.75" height="1.75" fill="#fff"/><rect x="0.00" y="26.25" width="1.75" height="1.75" fill="#fff"/></svg></span><span class="ibl">Trick</span><span class="icd" id="cd-trick"></span>
+    </div>
+    <div class="ib" id="ibt-bath" onclick="giveBath()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;display:block"><rect x="0.0" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="3.5" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="7.0" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="10.5" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="14.0" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="17.5" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="21.0" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="24.5" y="10.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="0.0" y="14.0" width="3.5" height="3.5" fill="#8888cc"/><rect x="3.5" y="14.0" width="3.5" height="3.5" fill="#aaaaee"/><rect x="7.0" y="14.0" width="3.5" height="3.5" fill="#aaaaee"/><rect x="10.5" y="14.0" width="3.5" height="3.5" fill="#ccccff"/><rect x="14.0" y="14.0" width="3.5" height="3.5" fill="#ccccff"/><rect x="17.5" y="14.0" width="3.5" height="3.5" fill="#aaaaee"/><rect x="21.0" y="14.0" width="3.5" height="3.5" fill="#aaaaee"/><rect x="24.5" y="14.0" width="3.5" height="3.5" fill="#8888cc"/><rect x="0.0" y="17.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="3.5" y="17.5" width="3.5" height="3.5" fill="#aaaaee"/><rect x="7.0" y="17.5" width="3.5" height="3.5" fill="#ccccff"/><rect x="10.5" y="17.5" width="3.5" height="3.5" fill="#ffffff"/><rect x="14.0" y="17.5" width="3.5" height="3.5" fill="#ccccff"/><rect x="17.5" y="17.5" width="3.5" height="3.5" fill="#aaaaee"/><rect x="21.0" y="17.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="24.5" y="17.5" width="3.5" height="3.5" fill="#8888cc"/><rect x="3.5" y="21.0" width="3.5" height="3.5" fill="#6666aa"/><rect x="7.0" y="21.0" width="3.5" height="3.5" fill="#8888cc"/><rect x="10.5" y="21.0" width="3.5" height="3.5" fill="#8888cc"/><rect x="14.0" y="21.0" width="3.5" height="3.5" fill="#8888cc"/><rect x="17.5" y="21.0" width="3.5" height="3.5" fill="#8888cc"/><rect x="21.0" y="21.0" width="3.5" height="3.5" fill="#6666aa"/><rect x="7.0" y="24.5" width="3.5" height="3.5" fill="#6666aa"/><rect x="17.5" y="24.5" width="3.5" height="3.5" fill="#6666aa"/><rect x="7.0" y="0.0" width="3.5" height="3.5" fill="#fff"/><rect x="14.0" y="0.0" width="3.5" height="3.5" fill="#fff"/><rect x="21.0" y="0.0" width="3.5" height="3.5" fill="#fff"/><rect x="7.0" y="3.5" width="3.5" height="3.5" fill="#aaaaee"/><rect x="14.0" y="3.5" width="3.5" height="3.5" fill="#aaaaee"/><rect x="21.0" y="3.5" width="3.5" height="3.5" fill="#aaaaee"/></svg></span><span class="ibl">Bath</span><span class="icd" id="cd-bath"></span>
+    </div>
+    <div class="ib" id="ibt-photo" onclick="takePhoto()">
+      <span class="ibi"><svg viewBox="0 0 28 28" width="28" height="28" style="image-rendering:pixelated;image-rendering:crisp-edges;display:block"><rect x="1.75" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="5.25" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="7.00" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="8.75" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="10.50" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="12.25" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="14.00" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="15.75" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="17.50" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="19.25" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="21.00" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="22.75" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="24.50" y="7.00" width="1.75" height="1.75" fill="#333"/><rect x="1.75" y="8.75" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="5.25" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="7.00" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="8.75" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="10.50" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="12.25" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="14.00" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="15.75" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="17.50" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="19.25" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="21.00" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="22.75" y="8.75" width="1.75" height="1.75" fill="#444"/><rect x="24.50" y="8.75" width="1.75" height="1.75" fill="#333"/><rect x="1.75" y="10.50" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="5.25" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="7.00" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="8.75" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="10.50" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="12.25" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="14.00" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="15.75" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="17.50" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="19.25" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="21.00" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="22.75" y="10.50" width="1.75" height="1.75" fill="#444"/><rect x="24.50" y="10.50" width="1.75" height="1.75" fill="#333"/><rect x="1.75" y="12.25" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="5.25" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="7.00" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="8.75" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="10.50" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="14.00" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="15.75" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="17.50" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="19.25" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="21.00" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="22.75" y="12.25" width="1.75" height="1.75" fill="#444"/><rect x="24.50" y="12.25" width="1.75" height="1.75" fill="#333"/><rect x="1.75" y="14.00" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="5.25" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="7.00" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="8.75" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="10.50" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="12.25" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="14.00" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="15.75" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="17.50" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="19.25" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="21.00" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="22.75" y="14.00" width="1.75" height="1.75" fill="#444"/><rect x="24.50" y="14.00" width="1.75" height="1.75" fill="#333"/><rect x="1.75" y="15.75" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="5.25" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="7.00" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="8.75" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="10.50" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="12.25" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="14.00" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="17.50" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="19.25" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="21.00" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="22.75" y="15.75" width="1.75" height="1.75" fill="#444"/><rect x="24.50" y="15.75" width="1.75" height="1.75" fill="#333"/><rect x="1.75" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="3.50" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="5.25" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="7.00" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="8.75" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="10.50" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="12.25" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="14.00" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="15.75" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="17.50" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="19.25" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="21.00" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="22.75" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="24.50" y="17.50" width="1.75" height="1.75" fill="#333"/><rect x="7.00" y="3.50" width="1.75" height="1.75" fill="#333"/><rect x="8.75" y="3.50" width="1.75" height="1.75" fill="#333"/><rect x="10.50" y="3.50" width="1.75" height="1.75" fill="#333"/><rect x="12.25" y="3.50" width="1.75" height="1.75" fill="#333"/><rect x="7.00" y="5.25" width="1.75" height="1.75" fill="#333"/><rect x="8.75" y="5.25" width="1.75" height="1.75" fill="#333"/><rect x="10.50" y="5.25" width="1.75" height="1.75" fill="#333"/><rect x="12.25" y="5.25" width="1.75" height="1.75" fill="#333"/><rect x="8.75" y="8.75" width="1.75" height="1.75" fill="#111"/><rect x="10.50" y="8.75" width="1.75" height="1.75" fill="#111"/><rect x="12.25" y="8.75" width="1.75" height="1.75" fill="#111"/><rect x="14.00" y="8.75" width="1.75" height="1.75" fill="#111"/><rect x="15.75" y="8.75" width="1.75" height="1.75" fill="#111"/><rect x="8.75" y="10.50" width="1.75" height="1.75" fill="#111"/><rect x="10.50" y="10.50" width="1.75" height="1.75" fill="#3080f8"/><rect x="12.25" y="10.50" width="1.75" height="1.75" fill="#3080f8"/><rect x="14.00" y="10.50" width="1.75" height="1.75" fill="#3080f8"/><rect x="15.75" y="10.50" width="1.75" height="1.75" fill="#111"/><rect x="8.75" y="12.25" width="1.75" height="1.75" fill="#111"/><rect x="10.50" y="12.25" width="1.75" height="1.75" fill="#3080f8"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#88aaff"/><rect x="14.00" y="12.25" width="1.75" height="1.75" fill="#3080f8"/><rect x="15.75" y="12.25" width="1.75" height="1.75" fill="#111"/><rect x="8.75" y="14.00" width="1.75" height="1.75" fill="#111"/><rect x="10.50" y="14.00" width="1.75" height="1.75" fill="#3080f8"/><rect x="12.25" y="14.00" width="1.75" height="1.75" fill="#3080f8"/><rect x="14.00" y="14.00" width="1.75" height="1.75" fill="#3080f8"/><rect x="15.75" y="14.00" width="1.75" height="1.75" fill="#111"/><rect x="8.75" y="15.75" width="1.75" height="1.75" fill="#111"/><rect x="10.50" y="15.75" width="1.75" height="1.75" fill="#111"/><rect x="12.25" y="15.75" width="1.75" height="1.75" fill="#111"/><rect x="14.00" y="15.75" width="1.75" height="1.75" fill="#111"/><rect x="15.75" y="15.75" width="1.75" height="1.75" fill="#111"/><rect x="12.25" y="10.50" width="1.75" height="1.75" fill="#fff"/><rect x="12.25" y="12.25" width="1.75" height="1.75" fill="#fff"/><rect x="19.25" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="21.00" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="22.75" y="8.75" width="1.75" height="1.75" fill="#F8C800"/><rect x="19.25" y="10.50" width="1.75" height="1.75" fill="#FFE040"/><rect x="21.00" y="10.50" width="1.75" height="1.75" fill="#FFE040"/><rect x="22.75" y="10.50" width="1.75" height="1.75" fill="#FFE040"/><rect x="8.75" y="3.50" width="1.75" height="1.75" fill="#e83838"/><rect x="10.50" y="3.50" width="1.75" height="1.75" fill="#e83838"/><rect x="1.75" y="8.75" width="1.75" height="1.75" fill="#222"/><rect x="1.75" y="10.50" width="1.75" height="1.75" fill="#222"/><rect x="24.50" y="8.75" width="1.75" height="1.75" fill="#222"/><rect x="24.50" y="10.50" width="1.75" height="1.75" fill="#222"/></svg></span><span class="ibl">Photo</span><span class="icd" id="cd-photo"></span>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <div class="slbl">Today's Goals <small id="gdLabel">0/6 done</small></div>
+    <div class="goal-grid" id="goalsGrid"></div>
+    <div class="card">
+      <div class="card-title">📊 Today's Progress</div>
+      <div id="todayBars"></div>
+    </div>
+    <div class="slbl" style="margin-top:4px">Tricks Learned <small id="trickCount">0 / 8</small></div>
+    <div class="trick-grid" id="tricksGrid" style="margin-bottom:12px"></div>
+  </div>
+</div>
+
+<!-- ════════════ LOG ════════════ -->
+<div class="screen" id="screen-log">
+  <div class="topbar"><div class="logo">Ele<span>vate</span></div><div class="pt pt-amber">Log Activity</div></div>
+  <!-- Health connect card -->
+  <div style="padding:10px 14px 0;flex-shrink:0">
+    <div class="hc-card">
+      <div class="hc-title">🔗 Connect Health Apps</div>
+      <div class="hc-sub">Sync steps & calories automatically from Apple Health or Google Fit. Tap to open your health app, then update your numbers here.</div>
+      <div class="hc-btns">
+        <button class="hc-btn hc-apple" onclick="openAppleHealth()"> Apple Health</button>
+        <button class="hc-btn hc-google" onclick="openGoogleFit()">🏃 Google Fit</button>
+      </div>
+      <div class="hc-btns" style="margin-top:6px">
+        <button class="hc-btn hc-manual" onclick="showScreen('home');showToast('Log manually using the sliders below!','💡')">✏️ Log Manually</button>
+      </div>
+      <div class="hc-status"><div class="hc-dot pending"></div>Ready to sync — tap a button above</div>
+    </div>
+  </div>
+  <div class="scroll" style="padding-top:10px">
+    <div class="lcat"><div class="lcat-title">🏃 Movement</div><div id="lc-movement"></div></div>
+    <div class="lcat"><div class="lcat-title">🍎 Nutrition</div><div id="lc-nutrition"></div></div>
+    <div class="lcat"><div class="lcat-title">😴 Recovery</div><div id="lc-recovery"></div></div>
+    <div class="lcat"><div class="lcat-title">🧠 Wellness</div><div id="lc-wellness"></div></div>
+  </div>
+</div>
+
+<!-- ════════════ DOGS ════════════ -->
+<div class="screen" id="screen-dogs">
+  <div class="topbar"><div class="logo">Ele<span>vate</span></div><div class="pt pt-amber">🐾 Your Pack</div></div>
+  <div class="scroll" style="padding-top:8px">
+    <!-- Active dog featured panel -->
+    <div class="card" style="background:var(--navy);border-color:transparent;padding:20px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div id="adSVGWrap" style="width:100px;height:88px;flex-shrink:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))">
+          <!-- Active dog SVG rendered by JS -->
+        </div>
+        <div style="flex:1">
+          <div style="font-family:monospace;font-weight:900;font-size:20px;color:var(--gold);letter-spacing:1px" id="adName">Buddy</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px" id="adBreed">Golden Retriever</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-family:monospace;font-weight:900;font-size:18px;color:#fff" id="adPets">0</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.4)">Pets</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:monospace;font-weight:900;font-size:18px;color:#fff" id="adTricks">0</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.4)">Tricks</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:monospace;font-weight:900;font-size:18px;color:var(--gold)" id="adHapp">50</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.4)">Happy%</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-family:monospace;font-weight:900;font-size:18px;color:#fff" id="adFetch">0</div>
+              <div style="font-size:9px;color:rgba(255,255,255,.4)">Catches</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="adStars" style="display:flex;gap:3px;margin-top:10px;justify-content:center"></div>
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:5px;justify-content:center" id="adTrickList"></div>
+    </div>
+
+    <div class="slbl">Collect All Dogs <small id="collCount">1 / 6 unlocked</small></div>
+    <!-- COLLECTIBLE CARD GRID -->
+    <div class="coll-grid" id="collGrid"></div>
+  </div>
+</div>
+
+<!-- ════════════ STATS ════════════ -->
+<div class="screen" id="screen-stats">
+  <div class="topbar"><div class="logo">Ele<span>vate</span></div><div class="pt pt-amber">📈 Stats</div></div>
+  <div class="scroll" style="padding-top:8px">
+    <div class="shdr">
+      <div class="sc"><div class="sn" id="stXP">0</div><div class="sl">Total XP</div></div>
+      <div class="sc"><div class="sn" id="stStr">0</div><div class="sl">Streak 🔥</div></div>
+      <div class="sc"><div class="sn" id="stLvl">1</div><div class="sl">Level ⭐</div></div>
+    </div>
+    <div class="card"><div class="card-title">📅 This Week</div><div class="cal" id="weekCal"></div></div>
+    <div class="card"><div class="card-title">🐾 Dog Interactions</div><div id="iStats"></div></div>
+    <div class="card"><div class="card-title">📝 Activity Log</div><div id="histLog"></div></div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="nb active" onclick="showScreen('home')" id="nav-home"><span class="ni"><svg viewBox="0 0 20 20" width="22" height="22" style="image-rendering:pixelated"><rect x="8" y="0" width="4" height="4" fill="#F8C800"/><rect x="4" y="4" width="12" height="4" fill="#F8C800"/><rect x="0" y="8" width="20" height="2" fill="#F8C800"/><rect x="4" y="10" width="12" height="10" fill="#aaa"/><rect x="4" y="10" width="12" height="2" fill="#888"/><rect x="8" y="13" width="4" height="7" fill="#5a3010"/><rect x="4" y="10" width="5" height="5" fill="#88aaff"/><rect x="11" y="10" width="5" height="5" fill="#88aaff"/></svg></span>Home</button>
+  <button class="nb" onclick="showScreen('log')" id="nav-log"><span class="ni"><svg viewBox="0 0 20 20" width="22" height="22" style="image-rendering:pixelated"><rect x="12" y="0" width="4" height="4" fill="#F8C800"/><rect x="8" y="4" width="4" height="4" fill="#F8C800"/><rect x="4" y="8" width="4" height="4" fill="#F8C800"/><rect x="0" y="12" width="4" height="4" fill="#F8C800"/><rect x="0" y="16" width="4" height="4" fill="#888"/><rect x="2" y="0" width="8" height="2" fill="#ddd"/><rect x="2" y="4" width="6" height="2" fill="#ddd"/><rect x="2" y="8" width="4" height="2" fill="#ddd"/></svg></span>Log</button>
+  <button class="nb" onclick="showScreen('dogs')" id="nav-dogs"><span class="ni"><svg viewBox="0 0 20 20" width="22" height="22" style="image-rendering:pixelated"><rect x="2" y="0" width="4" height="4" fill="#C87820"/><rect x="8" y="0" width="4" height="4" fill="#C87820"/><rect x="0" y="4" width="6" height="6" fill="#E8A840"/><rect x="8" y="4" width="4" height="4" fill="#E8A840"/><rect x="2" y="10" width="16" height="4" fill="#C87820"/><rect x="4" y="10" width="12" height="4" fill="#E8A840"/><rect x="2" y="14" width="4" height="4" fill="#C87820"/><rect x="8" y="14" width="2" height="2" fill="#111"/><rect x="11" y="14" width="2" height="2" fill="#111"/><rect x="14" y="14" width="4" height="4" fill="#C87820"/></svg></span>Dogs</button>
+  <button class="nb" onclick="showScreen('stats')" id="nav-stats"><span class="ni"><svg viewBox="0 0 20 20" width="22" height="22" style="image-rendering:pixelated"><rect x="2" y="14" width="4" height="6" fill="#3080f8"/><rect x="8" y="8" width="4" height="12" fill="#F8C800"/><rect x="14" y="2" width="4" height="18" fill="#e83838"/><rect x="0" y="18" width="20" height="2" fill="#888"/></svg></span>Stats</button>
+</nav>
+</div>
+
+<script>
+/* ─── DATA ─── */
+/* ══ DOG SVG ART — Style E: minimal bold 8-bit ══ */
+function dogSVG(id, w=120, h=100){
+  /* Body x=4..40 (36px). Legs at x=5,13,25,33 — each 6px wide — all inside body.
+     No tongue. Closed mouth line only. viewBox 52x46. */
+
+  /* rect shorthand */
+  const r = (x,y,W,H,c) => `<rect x="${x}" y="${y}" width="${W}" height="${H}" fill="${c}"/>`;
+
+  /* Standard leg set — with pixel walk animation via g element wrapping each leg */
+  /* Legs alternate: BL+FR step together, BR+FL step together */
+  const legs = (top, mid, bot) => {
+    const xs = [5,13,25,33];
+    const ko = [0,0,2,2];
+    const cls = ['dog-leg-walk-a','dog-leg-walk-b','dog-leg-walk-c','dog-leg-walk-d'];
+    return xs.map((x,i) =>
+      `<g class="${cls[i]}">` +
+      r(x,       32, 6, 4, top) +
+      r(x+ko[i], 36, 4, 4, mid) +
+      r(x+ko[i], 40, 4, 4, bot) +
+      r(x+ko[i],  44, 4, 1, bot) +
+      `</g>`
+    ).join('');
+  };
+
+  const dogs = {
+
+    /* ── BUDDY — Golden Retriever ── warm gold, cream belly, floppy ear */
+    buddy: (()=>{
+      const [G,g,L,P] = ['#d08820','#a06010','#f0b030','#a06010'];
+      return [
+        /* tail */
+        r(0,14,5,5,g), r(2,9,4,7,G),
+        /* body */
+        r(4,18,36,14,G), r(6,20,28,10,L), r(4,18,36,4,g),
+        /* legs */
+        legs(g,'#884c08',g),
+        /* neck */
+        r(34,11,10,9,G), r(34,11,10,3,g),
+        /* head */
+        r(32,2,20,14,G), r(32,2,20,4,g),
+        /* floppy ear left */
+        r(32,0,7,3,'#885010'), r(26,3,7,10,'#885010'),
+        /* ear right nub */
+        r(48,0,5,6,'#885010'),
+        /* muzzle */
+        r(44,9,10,7,L),
+        /* nose */
+        r(50,8,4,4,'#111'), r(51,9,2,1,'#444'),
+        /* eye */
+        r(36,5,7,7,'#111'), r(37,5,5,5,'#fff'), r(37,5,2,2,'#111'), r(40,6,2,2,'#fff'),
+        /* mouth closed */
+        r(45,14,7,2,'#6a3400'),
+        /* collar */
+        r(35,16,10,3,'#cc2200'), r(38,17,4,4,'#991500'),
+      ].join('');
+    })(),
+
+    /* ── REX — German Shepherd ── black saddle, tan face, pointed ears */
+    rex: (()=>{
+      const [M,BK,T,P] = ['#5c3808','#111116','#c8941a','#c8941a'];
+      return [
+        r(0,16,5,4,BK), r(2,10,4,7,M),
+        /* body */
+        r(4,18,36,14,M), r(4,18,36,8,BK), r(6,24,28,8,T), r(4,18,36,4,BK),
+        legs(M,BK,M),
+        r(34,11,10,9,M), r(34,11,10,3,BK),
+        /* head */
+        r(32,2,20,14,M), r(32,2,20,6,BK), r(35,6,17,9,T),
+        /* pointed ears — erect triangles */
+        r(32,0,4,7,BK), r(33,1,2,5,BK),
+        r(48,0,4,7,BK), r(49,1,2,5,BK),
+        /* muzzle */
+        r(44,9,10,7,T),
+        r(50,8,4,4,'#111'), r(51,9,2,1,'#444'),
+        r(36,5,7,7,'#111'), r(37,5,5,5,'#fff'), r(37,5,2,2,'#111'), r(40,6,2,2,'#fff'),
+        r(45,14,7,2,'#6a3400'),
+        r(35,16,10,3,'#1a66aa'), r(38,17,4,4,'#0d4477'),
+      ].join('');
+    })(),
+
+    /* ── COCO — White Poodle ── cream with pom details, pink collar */
+    coco: (()=>{
+      const [W,C,G,P] = ['#f8f4ee','#e0d4b8','#b8a888','#b8a888'];
+      return [
+        /* tail pom */
+        r(0,14,7,7,W), r(1,15,5,5,C), r(0,12,5,5,C),
+        /* body */
+        r(4,18,36,14,W), r(6,20,28,10,C), r(4,18,36,4,G),
+        /* fluffy ankle detail on paws */
+        legs(G,C,G),
+        /* extra ankle floof */
+        r(4,40,8,2,W), r(12,40,8,2,W), r(24,40,8,2,W), r(32,40,8,2,W),
+        r(34,11,10,9,W), r(34,11,10,3,G),
+        /* head */
+        r(32,2,20,14,W), r(32,2,20,4,G),
+        /* head pom */
+        r(33,0,16,3,W), r(36,-2,10,3,C),
+        /* floppy ear */
+        r(32,0,7,3,G), r(26,3,7,10,G), r(27,4,5,8,C),
+        r(48,0,5,6,G), r(49,1,3,4,C),
+        /* muzzle */
+        r(44,9,10,7,C),
+        r(50,8,4,4,'#111'), r(51,9,2,1,'#444'),
+        r(36,5,7,7,'#111'), r(37,5,5,5,'#fff'), r(37,5,2,2,'#111'), r(40,6,2,2,'#fff'),
+        r(45,14,7,2,'#8a7040'),
+        r(35,16,10,3,'#cc1188'), r(38,17,4,4,'#991166'),
+      ].join('');
+    })(),
+
+    /* ── STORM — Siberian Husky ── grey/white, BLUE eyes, pointed ears */
+    storm: (()=>{
+      const [GR,DK,W,P] = ['#7a8090','#3a4050','#eeeef8','#7a8090'];
+      return [
+        r(0,14,5,5,DK), r(1,15,3,3,GR), r(2,9,4,7,DK), r(3,10,2,5,W),
+        /* body */
+        r(4,18,36,14,GR), r(4,18,36,6,DK), r(6,23,28,9,W),
+        legs(GR,DK,GR),
+        r(34,11,10,9,GR), r(34,11,10,3,DK),
+        /* head */
+        r(32,2,20,14,GR), r(32,2,20,6,DK),
+        /* white face blaze */
+        r(38,4,10,12,W),
+        /* pointed ears */
+        r(32,0,4,7,DK), r(33,1,2,5,GR),
+        r(48,0,4,7,DK), r(49,1,2,5,GR),
+        /* muzzle */
+        r(44,9,10,7,'#d0d8f0'),
+        r(50,8,4,4,'#111'), r(51,9,2,1,'#444'),
+        /* BLUE eyes */
+        r(36,5,7,7,'#111'), r(37,5,5,5,'#1976D2'), r(37,5,2,2,'#0d47a1'),
+        r(40,6,2,2,'#fff'), r(37,9,3,2,'#fff'),
+        r(45,14,7,2,'#5a6070'),
+        r(35,16,10,3,'#cc2200'), r(38,17,4,4,'#991500'),
+      ].join('');
+    })(),
+
+    /* ── DIESEL — Rottweiler ── jet black, tan markings, sturdy */
+    diesel: (()=>{
+      const [BK,T,MT,P] = ['#111116','#c88030','#a06820','#c88030'];
+      return [
+        r(0,16,5,4,BK), r(1,17,3,2,MT),
+        /* body wide and heavy */
+        r(4,18,36,14,BK), r(10,24,20,8,T), r(4,18,36,4,BK),
+        /* legs black with tan paws */
+        legs(BK,BK,MT),
+        r(34,11,10,9,BK), r(34,11,10,3,BK),
+        /* head wide */
+        r(30,2,22,14,BK),
+        /* tan eyebrow dots */
+        r(33,3,4,3,T), r(43,3,4,3,T),
+        /* tan muzzle */
+        r(41,8,13,8,T),
+        /* floppy ears */
+        r(30,0,6,8,BK), r(48,0,5,8,BK),
+        r(50,8,4,4,'#111'), r(51,9,2,1,'#333'),
+        r(34,5,7,7,'#111'), r(35,5,5,5,'#fff'), r(35,5,2,2,'#111'), r(38,6,2,2,'#fff'),
+        r(42,14,9,2,'#5a3010'),
+        /* green collar */
+        r(35,16,10,3,'#1a7a40'), r(38,17,4,4,'#0d5530'),
+        r(39,18,2,3,'#fff'),
+      ].join('');
+    })(),
+
+    /* ── SHADOW — Wolf-Shepherd ── dark grey, amber eyes, tall ears */
+    shadow: (()=>{
+      const [MG,DG,LG,W,AM] = ['#606068','#2a2a32','#a8a8b8','#e0e0ec','#D4A017'];
+      return [
+        /* bushy tail 3 tones */
+        r(0,12,5,6,DG), r(1,13,3,4,MG), r(0,10,4,4,LG), r(2,8,3,4,W),
+        /* body */
+        r(4,18,36,14,MG), r(4,18,36,7,DG), r(6,24,28,8,LG),
+        legs(DG,MG,DG),
+        r(34,11,10,9,MG), r(34,11,10,3,DG),
+        /* head */
+        r(32,2,20,14,MG), r(32,2,20,7,DG),
+        /* white blaze */
+        r(38,5,10,11,W),
+        /* TALL wolf ears */
+        r(32,0,4,9,DG), r(33,1,2,7,MG),
+        r(48,0,4,9,DG), r(49,1,2,7,MG),
+        /* muzzle */
+        r(44,9,10,7,LG),
+        r(50,8,4,4,'#111'), r(51,9,2,1,'#333'),
+        /* AMBER eyes */
+        r(36,5,7,7,'#111'), r(37,5,5,5,AM), r(37,5,2,2,'#8b6010'),
+        r(40,6,2,2,'#fff'), r(37,9,3,2,'#fff'),
+        r(45,14,7,2,'#3a3a42'),
+        r(35,16,10,3,'#8b5cf6'), r(38,17,4,4,'#6d28d9'),
+      ].join('');
+    })(),
+  };
+
+  const body = dogs[id] || dogs.buddy;
+  return `<svg viewBox="0 0 54 48" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;image-rendering:pixelated;image-rendering:crisp-edges">${body}</svg>`;
+}
+
+/* Dog data with rarity + stars */
+const DOGS=[
+  {id:'buddy',name:'Buddy',emoji:'🐕',breed:'Golden Retriever',streak:0,stars:3,rarity:'rare',quote:'"Always loyal, always ready."'},
+  {id:'rex',name:'Rex',emoji:'🐕‍🦺',breed:'German Shepherd',streak:3,stars:4,rarity:'epic',quote:'"Sharp, focused, unstoppable."'},
+  {id:'coco',name:'Coco',emoji:'🐩',breed:'Standard Poodle',streak:7,stars:3,rarity:'rare',quote:'"Elegance in every step."'},
+  {id:'storm',name:'Storm',emoji:'🦮',breed:'Siberian Husky',streak:14,stars:4,rarity:'epic',quote:'"Born to run wild and free."'},
+  {id:'diesel',name:'Diesel',emoji:'🐶',breed:'Rottweiler',streak:21,stars:5,rarity:'legendary',quote:'"Strength with a soft heart."'},
+  {id:'shadow',name:'Shadow',emoji:'🐺',breed:'Wolf-Shepherd',streak:30,stars:5,rarity:'legendary',quote:'"The alpha runs alone."'},
+];
+const TRICKS=[
+  {id:'sit',name:'Sit',icon:'🪑',taps:8},
+  {id:'stay',name:'Stay',icon:'✋',taps:12},
+  {id:'shake',name:'Shake',icon:'🤝',taps:10},
+  {id:'roll',name:'Roll Over',icon:'🔄',taps:15},
+  {id:'speak',name:'Speak',icon:'🗣️',taps:8},
+  {id:'fp',name:'Fetch Pro',icon:'🎾',taps:20},
+  {id:'dance',name:'Dance',icon:'💃',taps:18},
+  {id:'high5',name:'High Five',icon:'🖐️',taps:12},
+];
+const METRICS=[
+  {id:'steps',name:'Steps',unit:'steps',icon:'👣',cat:'movement',max:15000,goal:10000,xp:50,color:'pa'},
+  {id:'workout',name:'Workout',unit:'min',icon:'💪',cat:'movement',max:120,goal:30,xp:40,color:'pg'},
+  {id:'cals',name:'Calories Burned',unit:'kcal',icon:'🔥',cat:'movement',max:1000,goal:400,xp:30,color:'pr'},
+  {id:'water',name:'Water',unit:'glasses',icon:'💧',cat:'nutrition',max:12,goal:8,xp:30,color:'pb'},
+  {id:'veggies',name:'Veggies',unit:'servings',icon:'🥦',cat:'nutrition',max:10,goal:5,xp:25,color:'pg'},
+  {id:'sleep',name:'Sleep',unit:'hrs',icon:'😴',cat:'recovery',max:12,goal:8,xp:40,color:'pp'},
+  {id:'screen',name:'Screen Time',unit:'hrs',icon:'📱',cat:'wellness',max:12,goal:3,xp:30,color:'pa',inv:true},
+  {id:'mindful',name:'Mindfulness',unit:'min',icon:'🧘',cat:'wellness',max:60,goal:10,xp:25,color:'pp'},
+];
+const LVL=[0,100,250,500,900,1400,2100,3000,4200,5800,8000,11000];
+const CDS={pet:25,belly:90,fetch:240,treat:90,walk:480,trick:150,bath:2400,photo:60};
+const QUIPS={
+  pet:["Woof! 🐾","More please! ❤️","You're the best! ⭐","*tail wagging!*","Again! Again! 🎾","*happy spin* 💫"],
+  belly:["YESSS!! 🤤","This is everything! 😍","Don't stop!! 🥰","*kicks leg* 🦵","Pure bliss... 💫"],
+  treat:["TREAT!! 🦴","Nom nom! 😋","My favourite! 🦴","*inhales* 👀","You spoil me! 🥰"],
+  walk:["WALKIES!!! 🦮","LET'S GO! 🌳","Sniff sniff... 👃","Best day ever! 🌼","*zooms* 💨"],
+  bath:["...fine. 😔","I hate this 😤","Fine. FINE. 🛁","Treat after? 😒","*shakes everywhere* 💦"],
+  trick:["Did I do it?! 🎓","Look at me go! 💃","I'm SO good! 🌟","*proud stance* 🏆"],
+  fetch:["BALL BALL! 🎾","Got it! 🏃","Again!! 🎾","*full zoom* 💨"],
+  photo:["Is my fur ok? 📸","Say cheese! 🧀","*dramatic pose*","Ready! 🌟"],
+  bark:["WOOF! 🔊","*alert mode* 👀","I heard something!"],
+};
+
+/* ─── STATE ─── */
+let S={
+  xp:0,streak:0,lastLogDate:null,
+  activeDog:'buddy',unlockedDogs:['buddy'],
+  dogPets:0,dogTreats:0,dogWalks:0,dogBaths:0,dogFetches:0,dogBellyRubs:0,dogPhotos:0,
+  tricksLearned:[],logs:[],todayLogs:{},allTimeTotals:{},cooldowns:{},interactionLog:[],
+  healthConnected:null,
+};
+function save(){localStorage.setItem('elv4',JSON.stringify(S))}
+function load(){
+  const d=localStorage.getItem('elv4');
+  if(d){try{S={...S,...JSON.parse(d)}}catch(e){}}
+  if(S.lastLogDate!==new Date().toDateString())S.todayLogs={};
+}
+
+/* ─── XP ─── */
+function getLvl(x){for(let i=LVL.length-1;i>=0;i--)if(x>=LVL[i])return i+1;return 1}
+function addXP(a,l){
+  const ol=getLvl(S.xp);S.xp+=a;save();updateXPUI();
+  showToast('+'+a+' XP — '+l,'⭐');
+  if(getLvl(S.xp)>ol)setTimeout(()=>showLvl(getLvl(S.xp)),900);
+}
+function updateXPUI(){
+  const l=getLvl(S.xp),base=LVL[Math.min(l-1,LVL.length-1)],next=LVL[Math.min(l,LVL.length-1)];
+  const pct=next>base?Math.min(100,((S.xp-base)/(next-base))*100):100;
+  document.getElementById('lvlNum').textContent=l;
+  document.getElementById('xpCur').textContent=S.xp-base;
+  document.getElementById('xpNext').textContent=next-base;
+  document.getElementById('xpFill').style.width=pct+'%';
+  document.getElementById('xpVal').textContent=S.xp;
+  document.getElementById('strVal').textContent=S.streak;
+  // streak banner
+  const sb=document.getElementById('streakBanner');
+  if(S.streak>0)sb.textContent='🔥 '+S.streak+'-day streak — keep it going!';
+  else sb.textContent='🔥 Start your streak — log something today!';
+}
+
+/* ─── TOAST ─── */
+let _tt;
+function showToast(msg,icon='🎉'){
+  document.getElementById('ti').textContent=icon;document.getElementById('tm').textContent=msg;
+  const t=document.getElementById('toast');t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* ─── LEVEL UP ─── */
+function showLvl(l){
+  document.getElementById('lvlTitle').textContent='Level Up! 🎉';
+  document.getElementById('lvlSub').textContent='You reached Level '+l+'!';
+  document.getElementById('lvlOver').classList.add('show');
+  spawnConfetti();checkUnlocks();
+}
+function closeLvl(){document.getElementById('lvlOver').classList.remove('show')}
+function spawnConfetti(){
+  const cols=['#F5A800','#1A1845','#4ade80','#60a5fa','#f87171','#a78bfa','#FFD166'];
+  for(let i=0;i<34;i++){
+    const p=document.createElement('div');p.className='cf';
+    const sz=5+Math.random()*8;
+    p.style.cssText='left:'+Math.random()*100+'%;top:0;width:'+sz+'px;height:'+sz+'px;background:'+cols[~~(Math.random()*cols.length)]+';border-radius:'+(Math.random()>.5?'50%':'2px')+';animation-delay:'+Math.random()*.5+'s;animation-duration:'+(1.3+Math.random()*.8)+'s';
+    document.getElementById('app').appendChild(p);setTimeout(()=>p.remove(),2500);
+  }
+}
+
+/* ─── COOLDOWNS ─── */
+function cdLeft(id){return Math.max(0,(S.cooldowns[id]||0)+CDS[id]*1000-Date.now())}
+function setCd(id){S.cooldowns[id]=Date.now();save()}
+function fmtCd(ms){const s=Math.ceil(ms/1000);return s<60?s+'s':Math.ceil(s/60)+'m'}
+function refreshCDs(){
+  Object.keys(CDS).forEach(id=>{
+    const btn=document.getElementById('ibt-'+id);
+    const cdEl=document.getElementById('cd-'+id);
+    if(!btn||!cdEl)return;
+    const l=cdLeft(id);
+    btn.style.opacity=l>0?'0.35':'1';
+    btn.style.pointerEvents=l>0?'none':'auto';
+    cdEl.textContent=l>0?fmtCd(l):'';
+  });
+}
+setInterval(refreshCDs,1000);
+
+/* ─── MOOD / DOG ─── */
+function getHappy(){
+  const met=METRICS.filter(m=>{const v=S.todayLogs[m.id]||0;return m.inv?v<=m.goal:v>=m.goal}).length;
+  const tp=(S.interactionLog||[]).filter(l=>l.type==='pet'&&new Date(l.ts).toDateString()===new Date().toDateString()).length;
+  return Math.min(100,Math.round((met/METRICS.length)*55+Math.min(tp,6)*4+S.streak*2+S.tricksLearned.length*2));
+}
+function dogSpeak(type){
+  const pool=QUIPS[type]||QUIPS.pet;
+  const msg=pool[~~(Math.random()*pool.length)];
+  const sp=document.getElementById('dogSpeech');
+  sp.textContent=msg;sp.classList.add('show');
+  setTimeout(()=>sp.classList.remove('show'),2600);
+}
+function updateMood(){
+  const h=getHappy();
+  const dog=DOGS.find(d=>d.id===S.activeDog)||DOGS[0];
+  /* Render SVG dog into scene */
+  const svgEl=document.getElementById('dogSVG');
+  if(svgEl) svgEl.innerHTML=dogSVG(dog.id).replace(/^<svg[^>]*>/,'').replace('</svg>','');
+  const dw=document.getElementById('dogWrap');
+  if(h>=70){dw.className='dog-wrap excited';document.getElementById('happEmoji').textContent='😄';document.getElementById('happLabel').textContent='Ecstatic'}
+  else if(h>=40){dw.className='dog-wrap';document.getElementById('happEmoji').textContent='😊';document.getElementById('happLabel').textContent='Happy'}
+  else if(h>=20){dw.className='dog-wrap';document.getElementById('happEmoji').textContent='😐';document.getElementById('happLabel').textContent='Okay'}
+  else{dw.className='dog-wrap sad';document.getElementById('happEmoji').textContent='😢';document.getElementById('happLabel').textContent='Sad'}
+  document.getElementById('happVal').textContent=h;
+}
+function logIA(t){(S.interactionLog=S.interactionLog||[]).unshift({type:t,ts:Date.now()});if(S.interactionLog.length>300)S.interactionLog.pop()}
+
+/* ─── INTERACTIONS ─── */
+function petDog(e){
+  if(cdLeft('pet')>0)return;
+  S.dogPets++;logIA('pet');setCd('pet');
+  const sw=document.getElementById('dogSvgWrap');
+  sw.style.transform='scale(1.3)';setTimeout(()=>sw.style.transform='',280);
+  if(e)e.stopPropagation();
+  dogSpeak('pet');addXP(3,'Petted 🤚');save();updateMood();
+}
+
+let belly={active:false,prog:0,lastY:null,iv:null,done:false};
+function startBelly(){
+  if(cdLeft('belly')>0)return;
+  belly={active:true,prog:0,lastY:null,iv:null,done:false};
+  document.getElementById('rubyBar').style.width='0%';
+  document.getElementById('rubyStatus').textContent='Stroke up and down!';
+  const dog=DOGS.find(d=>d.id===S.activeDog)||DOGS[0];
+  document.getElementById('bellyDog').innerHTML=dogSVG(dog.id,120,100);
+  document.getElementById('bellyModal').classList.add('show');
+  belly.iv=setInterval(()=>{if(!belly.active)return;if(belly.lastRub&&Date.now()-belly.lastRub>700){belly.prog=Math.max(0,belly.prog-4);document.getElementById('rubyBar').style.width=belly.prog+'%'}},200);
+}
+function closeBelly(){belly.active=false;clearInterval(belly.iv);document.getElementById('bellyModal').classList.remove('show')}
+function bellyMove(e){
+  if(!belly.active)return;
+  const cy=e.touches?e.touches[0].clientY:e.clientY;
+  if(belly.lastY!==null){
+    const dy=Math.abs(cy-belly.lastY);
+    if(dy>3){belly.prog=Math.min(100,belly.prog+dy*.9);belly.lastRub=Date.now();document.getElementById('rubyBar').style.width=belly.prog+'%';const bd=document.getElementById('bellyDog');bd.style.transform='rotate('+(Math.random()*12-6)+'deg)';setTimeout(()=>bd.style.transform='',100);if(belly.prog>=100&&!belly.done){belly.done=true;finishBelly()}}
+  }
+  belly.lastY=cy;
+}
+function finishBelly(){
+  belly.active=false;clearInterval(belly.iv);
+  document.getElementById('rubyStatus').textContent='Perfect! 😍';
+  S.dogBellyRubs=(S.dogBellyRubs||0)+1;logIA('belly');setCd('belly');dogSpeak('belly');spawnConfetti();
+  setTimeout(()=>{closeBelly();addXP(12,'Belly rub! 🐾');save();updateMood()},1000);
+}
+document.getElementById('bellyDog').addEventListener('mousemove',bellyMove);
+document.getElementById('bellyDog').addEventListener('touchmove',e=>{e.preventDefault();bellyMove(e)},{passive:false});
+document.getElementById('bellyDog').addEventListener('mousedown',()=>{belly.lastY=null});
+document.getElementById('bellyDog').addEventListener('touchstart',()=>{belly.lastY=null});
+
+/* Fetch */
+let fS={active:false,caught:0,missed:0,raf:null};
+function startFetch(){
+  if(cdLeft('fetch')>0)return;
+  fS={active:true,caught:0,missed:0,raf:null};
+  document.getElementById('fCaught').textContent=0;document.getElementById('fMissed').textContent=0;
+  document.getElementById('fetchModal').classList.add('show');dogSpeak('fetch');launchBall();
+}
+function launchBall(){
+  if(!fS.active)return;
+  const ball=document.getElementById('fBall');
+  const arena=document.getElementById('fetchArena');
+  const aw=arena.clientWidth,ah=arena.clientHeight;
+  const tx=20+Math.random()*(aw-60),ty=10+Math.random()*(ah-50);
+  ball.textContent='🎾';ball.style.display='block';ball.classList.remove('catchable');
+  ball.style.left='50%';ball.style.bottom='10px';ball.style.transition='none';
+  const dur=Math.max(700,1700-fS.caught*70);let start=null;
+  const sx=aw/2,sy=10,ex=tx,ey=ty;
+  function step(ts){
+    if(!fS.active)return;if(!start)start=ts;
+    const p=Math.min(1,(ts-start)/dur);
+    ball.style.left=(sx+(ex-sx)*p)+'px';ball.style.bottom=(sy+(ey-sy)*p)+'px';
+    if(p>=1){missedBall();return}fS.raf=requestAnimationFrame(step);
+  }
+  fS.raf=requestAnimationFrame(step);
+  ball.onclick=e=>{e.stopPropagation();cancelAnimationFrame(fS.raf);catchBall()};
+  setTimeout(()=>ball.classList.add('catchable'),Math.max(150,dur-450));
+}
+function catchBall(){if(!fS.active)return;fS.caught++;document.getElementById('fCaught').textContent=fS.caught;const ball=document.getElementById('fBall');ball.textContent='✨';ball.onclick=null;ball.classList.remove('catchable');S.dogFetches++;setTimeout(()=>{ball.textContent='🎾';launchBall()},500)}
+function missedBall(){if(!fS.active)return;fS.missed++;document.getElementById('fMissed').textContent=fS.missed;const ball=document.getElementById('fBall');ball.onclick=null;ball.classList.remove('catchable');if(fS.missed>=3){endFetch();return}setTimeout(()=>launchBall(),700)}
+function endFetch(){fS.active=false;cancelAnimationFrame(fS.raf);document.getElementById('fetchModal').classList.remove('show');const c=fS.caught;if(c>0){setCd('fetch');logIA('fetch');addXP(c*8,'Fetch — '+c+' caught! 🎾');save();updateMood()}}
+
+function giveTreat(){
+  if(cdLeft('treat')>0)return;setCd('treat');S.dogTreats++;logIA('treat');
+  const scene=document.getElementById('dogScene');
+  const b=document.createElement('div');b.style.cssText='position:absolute;font-size:22px;bottom:55px;left:'+(15+Math.random()*55)+'%;z-index:20;pointer-events:none;animation:cfFall 1.1s ease-in forwards';
+  b.textContent='🦴';scene.appendChild(b);setTimeout(()=>b.remove(),1200);
+  dogSpeak('treat');addXP(6,'Gave treat 🦴');save();updateMood();
+}
+
+function goWalk(){
+  if(cdLeft('walk')>0)return;
+  const steps=S.todayLogs['steps']||0;
+  if(steps<500){showToast('Log 500+ steps first! 👣','💙');return}
+  setCd('walk');S.dogWalks++;logIA('walk');
+  const dw=document.getElementById('dogWrap');dw.className='dog-wrap excited';dogSpeak('walk');
+  const bonus=Math.min(40,Math.floor(steps/400)*2);
+  setTimeout(()=>{dw.className='dog-wrap';addXP(15+bonus,'Walk! 🦮');save();updateMood()},2500);
+}
+
+let tS={active:false,id:null,taps:0,req:0,done:false};
+function openTrick(){
+  if(cdLeft('trick')>0)return;
+  const next=TRICKS.find(t=>!S.tricksLearned.includes(t.id));
+  if(!next){showToast("All tricks learned! 🏆",'🎓');return}
+  tS={active:true,id:next.id,taps:0,req:next.taps,done:false};
+  document.getElementById('tmTitle').textContent='Teaching: '+next.name+' '+next.icon;
+  document.getElementById('tmSub').textContent='Tap your dog to teach "'+next.name+'"!';
+  const dog=DOGS.find(d=>d.id===S.activeDog)||DOGS[0];
+  document.getElementById('tmDog').innerHTML=dogSVG(dog.id,120,100);
+  document.getElementById('tmCount').textContent=0;
+  document.getElementById('tmReq').textContent=next.taps;
+  document.getElementById('tmBar').style.width='0%';
+  document.getElementById('trickModal').classList.add('show');
+  document.getElementById('tmDog').onclick=()=>{
+    if(!tS.active||tS.done)return;
+    tS.taps++;document.getElementById('tmCount').textContent=tS.taps;
+    document.getElementById('tmBar').style.width=Math.min(100,(tS.taps/tS.req)*100)+'%';
+    const em=document.getElementById('tmDog');em.style.transform='scale(1.4) rotate('+(Math.random()*20-10)+'deg)';setTimeout(()=>em.style.transform='',150);
+    if(tS.taps>=tS.req&&!tS.done){tS.done=true;learnTrick(next)}
+  };
+}
+function learnTrick(t){tS.active=false;if(!S.tricksLearned.includes(t.id))S.tricksLearned.push(t.id);closeTrickModal();setCd('trick');logIA('trick');dogSpeak('trick');spawnConfetti();setTimeout(()=>addXP(25,'Learned '+t.name+'! '+t.icon),400);save();renderTricks();updateMood()}
+function closeTrickModal(){tS.active=false;document.getElementById('trickModal').classList.remove('show')}
+
+function giveBath(){
+  if(cdLeft('bath')>0)return;setCd('bath');S.dogBaths++;logIA('bath');
+  const sw=document.getElementById('dogSvgWrap');sw.classList.add('spinning');dogSpeak('bath');
+  setTimeout(()=>{sw.classList.remove('spinning');document.getElementById('dogWrap').className='dog-wrap excited';addXP(20,'Bath! 🛁');save();updateMood();setTimeout(()=>document.getElementById('dogWrap').className='dog-wrap',2500)},1600);
+}
+
+function takePhoto(){
+  if(cdLeft('photo')>0)return;setCd('photo');S.dogPhotos=(S.dogPhotos||0)+1;logIA('photo');
+  const scene=document.getElementById('dogScene');
+  const fl=document.createElement('div');fl.style.cssText='position:absolute;inset:0;background:#fff;opacity:0;transition:opacity .1s;z-index:30;pointer-events:none;border-radius:inherit';
+  scene.appendChild(fl);setTimeout(()=>fl.style.opacity='.85',50);setTimeout(()=>fl.style.opacity='0',300);setTimeout(()=>fl.remove(),500);
+  dogSpeak('photo');addXP(5,'Photo! 📸');save();updateMood();
+}
+
+/* ─── HEALTH CONNECT ─── */
+function openAppleHealth(){
+  // Deep link to Apple Health on iOS
+  window.location.href='x-apple-health://';
+  setTimeout(()=>{
+    S.healthConnected='apple';save();
+    showToast('Apple Health opened! Update your steps & calories here.','❤️');
+  },500);
+}
+function openGoogleFit(){
+  // Deep link to Google Fit / open Play Store if not installed
+  const ua=navigator.userAgent;
+  if(/android/i.test(ua)){
+    window.location.href='intent://fit.google.com#Intent;scheme=https;package=com.google.android.apps.fitness;end';
+  } else {
+    window.open('https://fit.google.com','_blank');
+  }
+  setTimeout(()=>{
+    S.healthConnected='google';save();
+    showToast('Google Fit opened! Log your activity there, then sync here.','🏃');
+  },500);
+}
+
+/* ─── HOME ─── */
+function renderHome(){
+  updateXPUI();updateMood();refreshCDs();
+  const h=new Date().getHours();
+  document.getElementById('greetTxt').textContent=h<12?'Good morning! 🌅':h>=17?'Good evening! 🌙':'Good afternoon! ☀️';
+  document.getElementById('greetSub').textContent=S.streak>0?'🔥 '+S.streak+'-day streak — keep going!':'Your dog is waiting for you!';
+  const grid=document.getElementById('goalsGrid');grid.innerHTML='';let done=0;
+  METRICS.slice(0,6).forEach(m=>{
+    const v=S.todayLogs[m.id]||0,isDone=m.inv?v<=m.goal:v>=m.goal;if(isDone)done++;
+    const pct=Math.min(100,(v/m.goal)*100);
+    const t=document.createElement('div');t.className='goal-tile'+(isDone?' done':'');t.onclick=()=>openLogModal(m);
+    t.innerHTML='<span class="gt-icon">'+m.icon+'</span><div class="gt-name">'+m.name+'</div><div class="gt-val">'+fv(v,m.unit)+' <small>/ '+fv(m.goal,m.unit)+'</small></div><div class="gt-bar"><div class="gt-bar-fill" style="width:'+pct+'%"></div></div>';
+    grid.appendChild(t);
+  });
+  document.getElementById('gdLabel').textContent=done+'/'+Math.min(6,METRICS.length)+' done';
+  document.getElementById('todayBars').innerHTML=METRICS.map(m=>{
+    const v=S.todayLogs[m.id]||0,pct=Math.min(100,m.inv?Math.max(0,100-(v/m.goal)*100):(v/m.goal)*100);
+    return '<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="font-weight:600;color:var(--muted)">'+m.icon+' '+m.name+'</span><span style="font-family:\'Nunito\',sans-serif;font-weight:800;color:var(--navy)">'+fv(v,m.unit)+' <span style="color:var(--muted);font-weight:500">/ '+fv(m.goal,m.unit)+'</span></span></div><div class="pbar"><div class="pfill '+m.color+'" style="width:'+pct+'%"></div></div></div>';
+  }).join('');
+  renderTricks();
+}
+function renderTricks(){
+  const tg=document.getElementById('tricksGrid');if(!tg)return;
+  tg.innerHTML=TRICKS.map(t=>'<div class="trick-chip'+(S.tricksLearned.includes(t.id)?' learned':'')+'">'+t.icon+' '+t.name+'</div>').join('');
+  const tc=document.getElementById('trickCount');if(tc)tc.textContent=S.tricksLearned.length+' / '+TRICKS.length;
+}
+function fv(v,u){return u==='steps'?v.toLocaleString():v}
+
+/* ─── LOG ─── */
+function renderLog(){
+  ['movement','nutrition','recovery','wellness'].forEach(cat=>{
+    const c=document.getElementById('lc-'+cat);c.innerHTML='';
+    METRICS.filter(m=>m.cat===cat).forEach(m=>{
+      const v=S.todayLogs[m.id]||0,done=m.inv?v<=m.goal:v>=m.goal,pct=Math.min(100,(v/m.goal)*100);
+      const d=document.createElement('div');d.className='lc';
+      d.innerHTML='<div class="lct"><div class="lcl"><span style="font-size:24px">'+m.icon+'</span><div><div class="lc-name">'+m.name+'</div><div class="lc-goal">Goal: '+fv(m.goal,m.unit)+' '+m.unit+'</div></div></div><div class="lcr"><div class="lc-val">'+fv(v,m.unit)+'</div><span class="chip '+(done?'chip-green':'chip-gold')+'">'+( done?'✓ Done':'+'+m.xp+' XP')+'</span></div></div><div class="pbar" style="margin-bottom:10px"><div class="pfill '+m.color+'" style="width:'+pct+'%"></div></div><button class="log-btn" onclick=\'openLogModal('+JSON.stringify(m).replace(/'/g,"&#39;")+')\'>'+( done?'✏️ Update':'➕ Log '+m.name)+'</button>';
+      c.appendChild(d);
+    });
+  });
+}
+
+/* ─── LOG MODAL ─── */
+let curM=null;
+function openLogModal(m){
+  if(typeof m==='string')m=METRICS.find(x=>x.id===m);curM=m;
+  const v=S.todayLogs[m.id]||0;
+  document.getElementById('mTitle').textContent='Log '+m.name+' '+m.icon;
+  document.getElementById('mSub').textContent=m.inv?'How many '+m.unit+'? (goal: under '+m.goal+')':'How many '+m.unit+'?';
+  document.getElementById('mMetric').textContent=m.name;document.getElementById('mUnit').textContent=m.unit;document.getElementById('mXpB').textContent='+'+m.xp+' XP';
+  const sl=document.getElementById('mSlider');sl.min=0;sl.max=m.max;sl.step=m.max>1000?500:m.max>100?5:1;sl.value=v;
+  document.getElementById('mVal').textContent=fv(v,m.unit);upSl(sl);document.getElementById('logModal').classList.add('show');
+}
+function closeLogModal(){document.getElementById('logModal').classList.remove('show');curM=null}
+document.getElementById('logModal').addEventListener('click',e=>{if(e.target===document.getElementById('logModal'))closeLogModal()});
+document.getElementById('mSlider').addEventListener('input',function(){document.getElementById('mVal').textContent=fv(+this.value,curM?.unit||'');upSl(this)});
+function upSl(sl){sl.style.setProperty('--pct',((sl.value-sl.min)/(sl.max-sl.min))*100+'%')}
+function submitLog(){
+  if(!curM)return;const m=curM,v=+document.getElementById('mSlider').value;
+  const wasDone=m.inv?(S.todayLogs[m.id]||0)<=m.goal:(S.todayLogs[m.id]||0)>=m.goal;
+  const isDone=m.inv?v<=m.goal:v>=m.goal;
+  S.todayLogs[m.id]=v;S.allTimeTotals[m.id]=(S.allTimeTotals[m.id]||0)+v;
+  S.logs.unshift({id:m.id,icon:m.icon,name:m.name,val:v,unit:m.unit,ts:Date.now()});if(S.logs.length>100)S.logs.pop();
+  addXP(5,'Logged '+m.name);
+  if(isDone&&!wasDone){setTimeout(()=>addXP(m.xp,m.name+' goal hit! 🎉'),600);spawnConfetti()}
+  const today=new Date().toDateString();
+  if(S.lastLogDate!==today){const y=new Date();y.setDate(y.getDate()-1);S.streak=S.lastLogDate===y.toDateString()?S.streak+1:1;S.lastLogDate=today;checkUnlocks()}
+  save();closeLogModal();
+  if(document.getElementById('screen-log').classList.contains('active'))renderLog();
+  renderHome();
+}
+
+/* ─── DOGS ─── */
+function checkUnlocks(){
+  DOGS.forEach(d=>{
+    if(!S.unlockedDogs.includes(d.id)&&S.streak>=d.streak&&d.streak>0){
+      S.unlockedDogs.push(d.id);save();
+      setTimeout(()=>{showToast(d.name+' unlocked! 🎉','🐾');spawnConfetti()},400);
+    }
+  });
+}
+function starHTML(n,max=5){return Array.from({length:max},(_,i)=>'<span class="card-star '+(i<n?'filled':'empty')+'">'+(i<n?'★':'☆')+'</span>').join('')}
+const rarityGrad={common:'rarity-common',rare:'rarity-rare',epic:'rarity-epic',legendary:'rarity-legendary'};
+const rarityLabel={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendary ✨'};
+
+function renderDogs(){
+  const ad=DOGS.find(d=>d.id===S.activeDog)||DOGS[0];
+  const adSVG=document.getElementById('adSVGWrap');
+  if(adSVG) adSVG.innerHTML=dogSVG(ad.id,80,72);
+  document.getElementById('adName').textContent=ad.name;
+  document.getElementById('adBreed').textContent=ad.breed;
+  document.getElementById('adPets').textContent=S.dogPets;
+  document.getElementById('adTricks').textContent=S.tricksLearned.length;
+  document.getElementById('adHapp').textContent=getHappy();
+  document.getElementById('adFetch').textContent=S.dogFetches;
+  const adStars=document.getElementById('adStars');
+  if(adStars) adStars.innerHTML=starHTML(ad.stars);
+  document.getElementById('adTrickList').innerHTML=S.tricksLearned.length===0
+    ?'<span style="font-size:11px;color:rgba(255,255,255,.35)">No tricks yet — tap the 🎓 Trick button!</span>'
+    :S.tricksLearned.map(id=>{const t=TRICKS.find(x=>x.id===id);return t?'<span style="background:rgba(245,168,0,.18);border:1px solid rgba(245,168,0,.3);color:var(--gold-l);border-radius:0;padding:3px 9px;font-size:10px;font-weight:700;font-family:monospace">'+t.icon+' '+t.name+'</span>':''}).join('');
+  const unlocked=S.unlockedDogs.length;
+  const cc=document.getElementById('collCount');if(cc) cc.textContent=unlocked+' / '+DOGS.length+' unlocked';
+  const grid=document.getElementById('collGrid');if(!grid) return;
+  grid.innerHTML='';
+  DOGS.forEach(dog=>{
+    const u=S.unlockedDogs.includes(dog.id),ia=S.activeDog===dog.id;
+    const dl=Math.max(0,dog.streak-S.streak);
+    const pct=dog.streak>0?Math.min(100,(S.streak/dog.streak)*100):100;
+    const card=document.createElement('div');
+    card.className='dog-coll-card '+(u?'unlocked-card '+(ia?'active-card-glow':''):'locked-card')+' '+rarityGrad[dog.rarity];
+    card.onclick=()=>{if(u&&!ia) selectDog(dog.id)};
+    card.innerHTML=
+      '<div class="card-badge">'+rarityLabel[dog.rarity]+'</div>'+
+      '<div class="card-inner">'+
+        '<div class="card-dog-art">'+dogSVG(dog.id,64,58)+'</div>'+
+        '<div class="card-name">'+dog.name+(ia?' ⭐':'')+'</div>'+
+        '<div class="card-breed">'+dog.breed+'</div>'+
+        '<div class="card-stars">'+starHTML(dog.stars)+'</div>'+
+      '</div>'+
+      (!u?'<div class="lock-overlay">🔒<div class="lock-days">'+dl+'d to unlock<div style="height:3px;background:#f0f0f7;border-radius:0;margin-top:3px;overflow:hidden;width:52px"><div style="width:'+pct+'%;height:100%;background:var(--gold);border-radius:0"></div></div></div></div>':'');
+    grid.appendChild(card);
+  });
+}
+function selectDog(id){
+  S.activeDog=id;save();renderDogs();
+  const d=DOGS.find(x=>x.id===id);
+  showToast(d.name+' is now your companion! 🐾','🐾');
+  updateMood();
+}
+
+/* ─── STATS ─── */
+function renderStats(){
+  document.getElementById('stXP').textContent=S.xp;document.getElementById('stStr').textContent=S.streak;document.getElementById('stLvl').textContent=getLvl(S.xp);
+  const cal=document.getElementById('weekCal');cal.innerHTML='';
+  const days=['S','M','T','W','T','F','S'],today=new Date();
+  for(let i=6;i>=0;i--){const d=new Date(today);d.setDate(today.getDate()-i);const logged=S.logs.some(l=>new Date(l.ts).toDateString()===d.toDateString());const el=document.createElement('div');el.className='cd'+(i===0?' today':logged?' done':'');el.textContent=days[d.getDay()];cal.appendChild(el)}
+  const counts={Pets:S.dogPets,'Belly Rubs':S.dogBellyRubs||0,Fetches:S.dogFetches,Treats:S.dogTreats,Walks:S.dogWalks,Baths:S.dogBaths,Photos:S.dogPhotos||0,Tricks:S.tricksLearned.length};
+  const icons2={Pets:'🤚','Belly Rubs':'🐾',Fetches:'🎾',Treats:'🦴',Walks:'🦮',Baths:'🛁',Photos:'📸',Tricks:'🎓'};
+  const mx=Math.max(1,...Object.values(counts));
+  document.getElementById('iStats').innerHTML=Object.entries(counts).map(([k,v])=>'<div class="hr"><div class="hl"><span style="font-size:18px">'+icons2[k]+'</span><div><div class="hn">'+k+'</div></div></div><div style="flex:1;margin:0 10px"><div class="pbar" style="height:4px"><div class="pfill pa" style="width:'+(v/mx*100)+'%"></div></div></div><div class="hxp">'+v+(k==='Tricks'?' / '+TRICKS.length:'')+'</div></div>').join('');
+  const hl=document.getElementById('histLog');
+  hl.innerHTML=S.logs.length===0
+    ?'<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No activity yet — head to Log! 📋</div>'
+    :S.logs.slice(0,22).map(l=>'<div class="hr"><div class="hl"><span style="font-size:18px">'+l.icon+'</span><div><div class="hn">'+l.name+'</div><div class="hd">'+new Date(l.ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})+'</div></div></div><div class="hxp">'+fv(l.val,l.unit)+' '+l.unit+'</div></div>').join('');
+}
+
+/* ─── SCREEN NAV ─── */
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if(name==='home')renderHome();if(name==='log')renderLog();if(name==='dogs')renderDogs();if(name==='stats')renderStats();
+}
+
+/* ─── INIT ─── */
+load();renderHome();
+setInterval(()=>{if(document.getElementById('screen-home').classList.contains('active'))updateMood()},10000);
+if(!S.lastLogDate){setTimeout(()=>{const sp=document.getElementById('dogSpeech');sp.textContent='Hi! Tap me or use the buttons below! 🐾';sp.classList.add('show');setTimeout(()=>sp.classList.remove('show'),4000)},1200)}
+</script>
+</body>
+</html>
